@@ -1,0 +1,16 @@
+# Python virtual environments
+venv/
+.venv/
+ads_project-venv/
+
+# Compiled Python
+__pycache__/
+*.pyc
+
+# Node/React
+frontend/node_modules/
+frontend/build/
+
+# Outros
+.DS_Store
+.env
