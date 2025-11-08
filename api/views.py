@@ -1,9 +1,11 @@
 from rest_framework import viewsets
-from .models import Hello
-from .serializers import HelloSerializer
+from .models import * # import everything from models
+from .serializers import * # import everything from serializers
 
+class UserViewSet(viewsets.ModelViewSet):
+	queryset = User.objects.all()
+	serializer_class = UserSerializer
 
-class HelloViewSet(viewsets.ModelViewSet):
-	"""A simple ViewSet for viewing and editing Hello messages."""
-	queryset = Hello.objects.all()
-	serializer_class = HelloSerializer
+class MovieViewSet(viewsets.ModelViewSet):
+	queryset = Movie.objects.all()
+	serializer_class = MovieSerializer
