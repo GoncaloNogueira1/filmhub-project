@@ -1,65 +1,35 @@
-# ----------------------------------------------------------------------
-# STAGE 1: Build the Frontend (React) Assets
-# ----------------------------------------------------------------------
-FROM node:18-alpine AS frontend-builder
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
 
-# Set the working directory for the client/frontend
-WORKDIR /app/frontend
-
-# Copy package files and install dependencies
-COPY ./frontend/package.json ./frontend/package-lock.json ./
-
-# Use npm ci for repeatable dependency installation
-RUN npm ci
-
-# Copy the rest of the frontend source code
-COPY ./frontend/ ./
-
-# Run the production build command
-RUN npm run build
-
-
-# ----------------------------------------------------------------------
-# STAGE 2: Final Image for Server (Django + Static Assets)
-# ----------------------------------------------------------------------
-FROM python:3.11-slim AS final
-
-# Define the build argument for the secret key
-# This ARG will be set by your GitHub Action 'build-args'
-ARG DJANGO_SECRET_KEY
-
-# Set general environment variables
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV DJANGO_ENV production
-ENV PATH="/py/bin:$PATH"
 
-# Create a non-root user and set up necessary directories
-RUN useradd --no-create-home appuser
-WORKDIR /usr/src/app
+# Set the working directory in the container
+WORKDIR /app
+
+# Install system dependencies (if any)
+# RUN apt-get update && apt-get install -y ...
 
 # Install Python dependencies
 COPY requirements.txt .
-# Set up a virtual environment and install dependencies, including gunicorn
-RUN python -m venv /py && \
-    /py/bin/pip install --upgrade pip && \
-    /py/bin/pip install --no-cache-dir -r requirements.txt && \
-    /py/bin/pip install gunicorn
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all Django/Python source code
+# Copy the entire backend project directory
 COPY . .
 
-# Copy built frontend assets from the builder stage
-# Assumes 'frontend/build' is the output folder
-COPY --from=frontend-builder /app/frontend/build /usr/src/app/frontend/build
+# --- This is the key part for the frontend ---
+# Copy the pre-built frontend files (from the CI job artifact)
+# into the location your Django app serves static files from.
+COPY ./frontend/build /app/staticfiles
+# ----------------------------------------------
 
-# Collect static files
-# CRITICAL FIX: Pass the DJANGO_SECRET_KEY into the environment only for the collectstatic command
-RUN DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY} DJANGO_SETTINGS_MODULE=filmhub.settings /py/bin/python manage.py collectstatic --noinput --verbosity 3
+# Expose the port the app runs on
 EXPOSE 8000
 
-# Run the application using Gunicorn
-# IMPORTANT: Replace 'your_project_name' with your actual Django project folder name
-CMD ["/py/bin/gunicorn", "--bind", "0.0.0.0:8000", "filmhub.wsgi:application"]
-
-# Switch to the non-root user for security
-USER appuser
+# --- IMPORTANT ---
+# You must:
+# 1. Add 'gunicorn' to your requirements.txt
+# 2. Change 'your_project_name' to your actual Django project's name
+# 3. Make sure your Django settings.py has: STATIC_ROOT = BASE_DIR / "staticfiles"
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "your_project_name.wsgi:application"]
