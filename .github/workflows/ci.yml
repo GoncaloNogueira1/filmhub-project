@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   frontend:
-    name: Frontend (React)
+    name: frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -46,7 +46,7 @@ jobs:
           path: ./frontend/build
 
   backend:
-    name: Backend (Django)
+    name: backend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
