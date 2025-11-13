@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   release:
-    name: Build and Release Docker Image
+    name: Release
     runs-on: ubuntu-latest
 
     steps:
