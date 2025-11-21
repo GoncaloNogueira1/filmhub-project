@@ -47,14 +47,14 @@ export default function Auth() {
         const token = data.token;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        setSuccess(isLogin ? 'Login realizado com sucesso!' : 'Conta criada com sucesso!');
+        setSuccess(isLogin ? 'Login successful!' : 'Account created successfully!');
         setFormData({ username: '', email: '', password: '' });
-        console.log('Autenticado com token:', token);
+        console.log('Authenticated with token:', token);
       } else {
-        setError(data.error || data.username?.[0] || data.email?.[0] || 'Erro na autenticação');
+        setError(data.error || data.username?.[0] || data.email?.[0] || 'Authentication error');
       }
     } catch (err) {
-      setError('Erro ao conectar com o servidor');
+      setError('Error connecting to server');
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export default function Auth() {
             fontSize: '24px',
             color: '#333'
         }}>
-            {isLogin ? 'Login' : 'Criar Conta'}
+            {isLogin ? 'Login' : 'Create Account'}
         </h2>
 
         {error && (
@@ -131,7 +131,7 @@ export default function Auth() {
             <input
             type="text"
             name="username"
-            placeholder="Utilizador"
+            placeholder="Username"
             value={formData.username}
             onChange={handleChange}
             required
@@ -169,7 +169,7 @@ export default function Auth() {
             <input
             type="password"
             name="password"
-            placeholder="Palavra-passe"
+            placeholder="Password"
             value={formData.password}
             onChange={handleChange}
             required
@@ -200,7 +200,7 @@ export default function Auth() {
                 opacity: loading ? 0.6 : 1
             }}
             >
-            {loading ? 'A carregar...' : (isLogin ? 'Entrar' : 'Criar Conta')}
+            {loading ? 'Loading...' : (isLogin ? 'Login' : 'Create Account')}
             </button>
         </div>
 
@@ -210,7 +210,7 @@ export default function Auth() {
             color: '#666',
             fontSize: '14px'
         }}>
-            {isLogin ? 'Ainda não tens conta?' : 'Já tens conta?'}
+            {isLogin ? 'Don’t have an account?' : 'Already have an account?'}
             {' '}
             <button
             onClick={() => setIsLogin(!isLogin)}
@@ -224,7 +224,7 @@ export default function Auth() {
                 textDecoration: 'underline'
             }}
             >
-            {isLogin ? 'Criar' : 'Entrar'}
+            {isLogin ? 'Create' : 'Login'}
             </button>
         </p>
         </div>
