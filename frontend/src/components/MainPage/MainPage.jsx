@@ -11,11 +11,9 @@ export default function MainPage({ user, onLogout }) {
   const [recommendations, setRecommendations] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   
-  // Estados de loading separados
   const [moviesLoading, setMoviesLoading] = useState(true);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
   
-  // Estados de erro separados
   const [moviesError, setMoviesError] = useState('');
   const [recommendationsError, setRecommendationsError] = useState('');
   
@@ -26,9 +24,7 @@ export default function MainPage({ user, onLogout }) {
   }, []);
 
   const loadInitialData = async () => {
-    // Carregar filmes
     loadMovies();
-    // Carregar recomendações
     loadRecommendations();
   };
 
@@ -59,7 +55,6 @@ export default function MainPage({ user, onLogout }) {
     } catch (err) {
       console.error('Error loading recommendations:', err);
       setRecommendationsError('Error loading recommendations.');
-      // Não é erro crítico, pode continuar sem recomendações
     } finally {
       setRecommendationsLoading(false);
     }
@@ -89,9 +84,7 @@ export default function MainPage({ user, onLogout }) {
   const handleRate = async (movieId, rating) => {
     try {
       await movieService.rateMovie(movieId, rating);
-      // Atualizar a lista de filmes para refletir a nova avaliação
       loadMovies();
-      // Refresh recommendations after rating
       loadRecommendations();
     } catch (err) {
       console.error('Error rating movie:', err);
@@ -99,7 +92,7 @@ export default function MainPage({ user, onLogout }) {
   };
 
   const handleSelectMovie = (movie) => {
-    // TODO: Navigate to movie detail page
+    // TODO: Navigate to the movie details page
     console.log('Selected movie:', movie);
   };
 
@@ -125,7 +118,6 @@ export default function MainPage({ user, onLogout }) {
     }
 
     if (currentView === 'recommendations') {
-      // Se houver erro a carregar recomendações, mostra mensagem amigável
       if (recommendationsError && recommendations.length === 0) {
         return (
           <div className="movie-list-section">
@@ -151,7 +143,6 @@ export default function MainPage({ user, onLogout }) {
       );
     }
 
-    // Home view
     return (
       <>
         {!recommendationsLoading && recommendations.length > 0 && (

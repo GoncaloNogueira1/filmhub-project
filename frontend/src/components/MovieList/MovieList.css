@@ -73,7 +73,6 @@
   font-size: 16px;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .movie-list-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

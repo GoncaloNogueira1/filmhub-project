@@ -38,7 +38,6 @@ export default function Auth({ onLoginSuccess }) {
         setSuccess(isLogin ? 'Login successful!' : 'Account created successfully!');
         setFormData({ username: '', email: '', password: '' });
         
-        // Notify parent component of successful login
         if (onLoginSuccess) {
           setTimeout(() => {
             onLoginSuccess(data.user);

@@ -89,7 +89,7 @@ export default function MovieCard({ movie, onRate, onSelect }) {
             </button>
           </div>
 
-          {/* Rating Popup - aparece abaixo */}
+          {}
           {showRatingPopup && (
             <div className="rating-popup">
               <h4 className="rating-popup-title">Rate this movie</h4>
