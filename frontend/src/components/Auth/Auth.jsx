@@ -44,7 +44,6 @@ export default function Auth({ onLoginSuccess }) {
           }, 500);
         }
       } else {
-        // Processar erros do backend
         if (data.username) {
           const errorMsg = Array.isArray(data.username) ? data.username[0] : data.username;
           setError(errorMsg === 'This field may not be blank.' ? 'Username field may not be blank.' : errorMsg);
