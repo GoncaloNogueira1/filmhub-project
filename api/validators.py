@@ -41,4 +41,4 @@ def validate_password_strength(password):
 
 def validate_username(username):
     if not username or username.strip() == '':
-        raise ValidationError('Username cannot be empty.')
+        raise ValidationError('Username field may not be blank.')
