@@ -39,7 +39,7 @@ function App() {
         <Route path="login" element={<Auth />} />
 
         <Route element={<RequireAuth />}>
-          <Route path="mainpage" element={<MainPage />} />
+          <Route path="/" element={<MainPage />} />
         </Route>
       </Route>
     </Routes>
