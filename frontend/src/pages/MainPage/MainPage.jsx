@@ -1,37 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
-import Navbar from '../Navbar/Navbar';
-import SearchBar from '../SearchBar/SearchBar';
-import MovieList from '../MovieList/MovieList';
-import MovieDetails from '../MovieDetails/MovieDetails';
-import { movieService } from '../../services/movieService';
-import './MainPage.css';
+// src/pages/MainPage/MainPage.jsx
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
+import Navbar from "../../components/Navbar/Navbar";
+import SearchBar from "../../components/SearchBar/SearchBar";
+import MovieList from "../../components/MovieList/MovieList";
+import MovieDetails from "../../components/MovieDetails/MovieDetails";
+import { movieService } from "../../services/movieService";
+import "./MainPage.css";
 
-export default function MainPage({ user, onLogout }) {
-  const [currentView, setCurrentView] = useState('home');
+export default function MainPage() {
+  const { auth, logout } = useAuth();
+
+  const [currentView, setCurrentView] = useState("home");
   const [selectedMovieId, setSelectedMovieId] = useState(null);
   const [movies, setMovies] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
-  
   const [moviesLoading, setMoviesLoading] = useState(true);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
-  
-  const [moviesError, setMoviesError] = useState('');
-  const [recommendationsError, setRecommendationsError] = useState('');
-  
-  const [searchQuery, setSearchQuery] = useState('');
+  const [moviesError, setMoviesError] = useState("");
+  const [recommendationsError, setRecommendationsError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const loadMovies = useCallback(async () => {
     setMoviesLoading(true);
-    setMoviesError('');
+    setMoviesError("");
     try {
-      console.log('Loading all movies...');
       const moviesData = await movieService.getMovies();
-      console.log('Movies loaded:', moviesData);
       setMovies(Array.isArray(moviesData) ? moviesData : []);
     } catch (err) {
-      console.error('Error loading movies:', err);
-      setMoviesError('Error loading movies. Please try again.');
+      console.error("Error loading movies:", err);
+      setMoviesError("Error loading movies. Please try again.");
     } finally {
       setMoviesLoading(false);
     }
@@ -39,15 +39,15 @@ export default function MainPage({ user, onLogout }) {
 
   const loadRecommendations = useCallback(async () => {
     setRecommendationsLoading(true);
-    setRecommendationsError('');
+    setRecommendationsError("");
     try {
-      console.log('Loading recommendations...');
       const recommendationsData = await movieService.getRecommendations();
-      console.log('Recommendations loaded:', recommendationsData);
-      setRecommendations(Array.isArray(recommendationsData) ? recommendationsData : []);
+      setRecommendations(
+        Array.isArray(recommendationsData) ? recommendationsData : []
+      );
     } catch (err) {
-      console.error('Error loading recommendations:', err);
-      setRecommendationsError('Error loading recommendations.');
+      console.error("Error loading recommendations:", err);
+      setRecommendationsError("Error loading recommendations.");
     } finally {
       setRecommendationsLoading(false);
     }
@@ -66,18 +66,17 @@ export default function MainPage({ user, onLogout }) {
     setSearchQuery(query);
     if (!query) {
       setSearchResults([]);
-      setCurrentView('home');
+      setCurrentView("home");
       return;
     }
-    
     setMoviesLoading(true);
-    setMoviesError('');
+    setMoviesError("");
     try {
       const results = await movieService.searchMovies(query);
       setSearchResults(Array.isArray(results) ? results : []);
-      setCurrentView('search');
+      setCurrentView("search");
     } catch (err) {
-      setMoviesError('Error searching movies.');
+      setMoviesError("Error searching movies.");
     } finally {
       setMoviesLoading(false);
     }
@@ -89,39 +88,39 @@ export default function MainPage({ user, onLogout }) {
       loadMovies();
       loadRecommendations();
     } catch (err) {
-      console.error('Error rating movie:', err);
+      console.error("Error rating movie:", err);
     }
   };
 
   const handleSelectMovie = (movie) => {
     setSelectedMovieId(movie.id);
-    setCurrentView('movie-details');
+    setCurrentView("movie-details");
   };
 
   const handleBackToMovies = () => {
     setSelectedMovieId(null);
-    setCurrentView('home');
+    setCurrentView("home");
   };
 
   const handleNavigate = (view) => {
     setCurrentView(view);
-    setSearchQuery('');
+    setSearchQuery("");
     setSearchResults([]);
   };
 
   const renderContent = () => {
-    if (currentView === 'movie-details' && selectedMovieId) {
+    if (currentView === "movie-details" && selectedMovieId) {
       return (
         <MovieDetails
           movieId={selectedMovieId}
-          user={user}
-          onLogout={onLogout}
+          user={auth.user}
+          onLogout={logout}
           onBack={handleBackToMovies}
         />
       );
     }
 
-    if (currentView === 'search' && searchQuery) {
+    if (currentView === "search" && searchQuery) {
       return (
         <MovieList
           title={`Search results for "${searchQuery}"`}
@@ -135,7 +134,8 @@ export default function MainPage({ user, onLogout }) {
       );
     }
 
-    if (currentView === 'recommendations') {
+    if (currentView === "recommendations") {
+      // ... (Keep existing logic)
       if (recommendationsError && recommendations.length === 0) {
         return (
           <div className="movie-list-section">
@@ -147,7 +147,6 @@ export default function MainPage({ user, onLogout }) {
           </div>
         );
       }
-      
       return (
         <MovieList
           title="Recommended for You"
@@ -172,7 +171,7 @@ export default function MainPage({ user, onLogout }) {
             onSelectMovie={handleSelectMovie}
           />
         )}
-        
+
         <MovieList
           title="All Movies"
           movies={movies}
@@ -187,32 +186,32 @@ export default function MainPage({ user, onLogout }) {
 
   return (
     <div className="main-page">
-      {currentView === 'movie-details' ? (
+      {currentView === "movie-details" ? (
         renderContent()
       ) : (
         <>
-          <Navbar 
-            user={user} 
-            onLogout={onLogout} 
+          <Navbar
+            user={auth.user}
+            onLogout={logout}
             onNavigate={handleNavigate}
           />
-          
+
           <div className="main-content">
             <header className="main-header">
               <h1 className="main-welcome">
-                Welcome back, {user?.username || 'User'}!
+                {/* USE AUTH.USER */}
+                Welcome back, {auth.user?.username || "User"}!
               </h1>
               <p className="main-subtitle">
-                Discover your next favorite movie – rate, explore, and get smart recommendations!
+                Discover your next favorite movie – rate, explore, and get smart
+                recommendations!
               </p>
-              {(currentView === 'home' || currentView === 'search') && (
+              {(currentView === "home" || currentView === "search") && (
                 <SearchBar onSearch={handleSearch} />
               )}
             </header>
-            
-            <main className="main-movies">
-              {renderContent()}
-            </main>
+
+            <main className="main-movies">{renderContent()}</main>
           </div>
         </>
       )}
