@@ -8,8 +8,12 @@ ENV PYTHONUNBUFFERED 1
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies (if any)
-# RUN apt-get update && apt-get install -y ...
+# Install system dependencies needed for the Postgres driver (psycopg2)
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 
 # Install Python dependencies
 COPY ./api/requirements.txt .
@@ -21,7 +25,7 @@ COPY . .
 # --- This is the key part for the frontend ---
 # Copy the pre-built frontend files (from the CI job artifact)
 # into the location your Django app serves static files from.
-COPY ./frontend/build /app/staticfiles
+#COPY ./frontend/build /app/staticfiles
 # ----------------------------------------------
 
 # Expose the port the app runs on
