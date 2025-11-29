@@ -21,3 +21,7 @@ dist/
 # Outros
 .DS_Store
 .env
+
+# Django SQLite database
+db.sqlite3
+*.sqlite3
