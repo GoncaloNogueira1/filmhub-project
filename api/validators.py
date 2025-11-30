@@ -2,6 +2,8 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 
+from .models import Movie
+
 def validate_email(email):
     if '@' not in email:
         raise ValidationError('Email format is invalid. Use format: name@example.com')
@@ -42,3 +44,34 @@ def validate_password_strength(password):
 def validate_username(username):
     if not username or username.strip() == '':
         raise ValidationError('Username field may not be blank.')
+    
+def validate_unique_username(username):
+    if User.objects.filter(username=username).exists():
+        raise ValidationError('This username is already taken.')
+
+def validate_unique_movie(title, description, genre, duration, year, instance=None):
+    """
+    Validate that no existing Movie has the same (title, description, genre, year).
+    If `instance` is provided, exclude it from the check (for updates).
+    """
+    qs = Movie.objects.filter(title=title, description=description, genre=genre, duration=duration, year=year)
+    if instance:
+        qs = qs.exclude(pk=instance.pk)
+    if qs.exists():
+        # Raise a Django REST Framework ValidationError instead of Django's
+        raise ValidationError('A movie with the same title, description, genre, and year already exists.')
+    
+def get_or_create_movie_from_external_id(movie_id):
+    movie = None
+    try:
+        movie = Movie.objects.get(external_id=movie_id)
+    except Movie.DoesNotExist:
+        Movie_obj = Movie(external_id=movie_id)
+        movie = Movie_obj.create_movie()
+        if not movie:
+            return None
+    return movie
+    
+def validate_rating_score(score):
+    if score < 1 or score > 5:
+        raise ValidationError('Rating score must be between 1 and 5.')
