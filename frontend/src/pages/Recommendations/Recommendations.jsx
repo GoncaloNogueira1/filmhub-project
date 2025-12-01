@@ -17,6 +17,8 @@ export default function Recommendations() {
     } catch (err) {
       console.error("Error loading recommendations:", err);
       setError("Failed to load recommendations. Please try again later.");
+      // TODO : ERROR HANDLER
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
