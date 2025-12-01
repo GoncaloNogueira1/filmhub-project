@@ -22,7 +22,7 @@ export default function Recommendations() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [error]);
 
   useEffect(() => {
     loadRecommendations();
