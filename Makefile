@@ -1,11 +1,13 @@
 INIT =
 
-.PHONY: migrate run clear
+.PHONY: all install migrate run test clear 
 
-build :
+all : clear install migrate test run
+
+install :
 	@echo "NOTE : You first need to set up a virtual environment."
 	@echo "Building the project..."
-	pip install -r requirements.txt
+	pip install -r ./api/requirements.txt
 	@echo "Build completed."
 
 migrate :
@@ -24,8 +26,13 @@ run :
 	@echo "Starting the development server..."
 	python manage.py runserver
 
+test :
+	@echo "Running tests..."
+	python manage.py test api
+	@echo "Tests completed."
+
 clear :
 	@echo "Cleaning up DB files..."
-	rm *.sqlite3
+	rm -f *.sqlite3
 	find ./api/migrations ! -name '__init__.py' -type f -exec rm -f {} +
 	@echo "Cleanup completed."

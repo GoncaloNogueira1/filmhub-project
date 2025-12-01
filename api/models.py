@@ -5,6 +5,12 @@ import requests
 
 API_BASE_URL = "https://api.themoviedb.org/3" 
 API_KEY = "ed6c1919d48f4231cb8f449cfe728211"
+GENRE_MAP = {}
+KEYWORD_MAP = {}
+
+def print_maps():
+    print("GENRE_MAP:", GENRE_MAP)
+    print("KEYWORD_MAP:", KEYWORD_MAP)
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -16,14 +22,44 @@ class UserProfile(models.Model):
         return self.user.username
     
     def update_recommendations(self):
-        # Placeholder for recommendation logic
-        pass
+        # Clear existing recommendations
+        self.recommended_movies.clear()
+
+        # Retrieve rated movies by the user
+        ratings = self.user.rating_set.all()
+        # Define the main conditions for the recommendation logic
+        liked_genres = set()
+        liked_keywords = set()
+        for rating in ratings:
+            movie = rating.movie
+            if rating.score >= 4:  # Consider movies rated 4 or 5 as
+                # Extract genres
+                movie_genres = [g.strip() for g in movie.genre.split(',')]
+                liked_genres.update(movie_genres)
+                # Extract keywords
+                movie_keywords = [k.strip() for k in movie.keyword.split(',')]
+                liked_keywords.update(movie_keywords)
+        # Find movies that match liked genres or keywords
+        # Construct the API URL and headers
+        api_url = f"{API_BASE_URL}/movie/{self.external_id}"
+        headers = {
+            "accept": "application/json",
+        }
+        params = {
+            "api_key": API_KEY,
+        }
+        recommended_set = set()
+        return None
+        
+            
 
 class Movie(models.Model):
     external_id = models.IntegerField(unique=True, null=False, blank=False)
     title = models.CharField(max_length=100)
+    poster_url = models.URLField(max_length=255, blank=True)
     description = models.TextField(blank=True)
     genre = models.CharField(max_length=255)
+    keyword = models.CharField(max_length=255)
     duration = models.IntegerField(help_text="Duration in minutes")
     year = models.IntegerField()
 
@@ -31,7 +67,7 @@ class Movie(models.Model):
         return self.title
     
     def create_movie_from_external_id(self):
-        # If the movie doesn't exist (tested in the previous function), proceed to API call
+        # If the movie doesn't exist (tested in the previous function), proceed to API call to integrate it into our DB
         try:
             # Construct the API URL and headers
             api_url = f"{API_BASE_URL}/movie/{self.external_id}"
@@ -53,15 +89,38 @@ class Movie(models.Model):
             if not data.get('title') or not data.get('release_date'):
                  raise ValueError("Missing essential movie data from API.")
             self.title = data.get('title')
+            self.poster_url = f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else ""
             self.description = data.get('overview', '') # Use overview for description
             self.duration = data.get('runtime', 0)     # Use runtime for duration (minutes)
-            # Extract genre names (TMDb returns a list of dictionaries)
-            genre_names = [g['name'] for g in data.get('genres', [])]
+            
+            # GENRES
+            genre_names_list = []
+            for genre in data.get('genres', []):
+                genre_names_list.append(genre['name']) 
+                GENRE_MAP[genre['id']] = genre['name']
             # Store the main genres as a comma-separated string, limited by your max_length
-            self.genre = ", ".join(genre_names)[:255]
+            self.genre = ", ".join(genre_names_list)[:255]
+
+            # KEYWORDS
+            # Fetch keywords from a separate endpoint
+            keywords_url = f"{API_BASE_URL}/movie/{self.external_id}/keywords"
+            keywords_response = requests.get(keywords_url, headers=headers, params=params)
+            keywords_response.raise_for_status()
+            keywords_data = keywords_response.json()
+
+            keyword_names_list = []
+            for k in keywords_data.get('keywords', []):
+                keyword_names_list.append(k['name'])
+                KEYWORD_MAP[k['id']] = k['name']
+            
+            self.keyword = ", ".join(keyword_names_list)[:255]
+
+            # YEAR
             # Extract year from release_date (e.g., "2023-10-20")
             release_date = data.get('release_date')
             self.year = int(release_date.split('-')[0]) if release_date else 0
+
+            print_maps()
 
             # Save the new movie to the database
             self.save()
@@ -80,7 +139,7 @@ class Movie(models.Model):
             # Handle JSON parsing or other general errors
             print(f"General Error processing movie {self.external_id}: {e}")
             return None
-    
+
     class Meta:
         # Ensure the exact combination of these fields is unique at the database level.
         # This prevents race conditions where two requests create the same movie concurrently.

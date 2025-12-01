@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, permission_classes
 
-from .validators import get_or_create_movie_from_external_id
+from .validators import get_or_create_movie_from_external_id, get_or_search_movie_from_external_id
 from .models import Movie, Rating, UserProfile
 from .serializers import UserSerializer, MovieSerializer, RatingSerializer
 from .permissions import IsSuperUserOrReadOnly
@@ -94,6 +94,9 @@ def watched_movies(request):
         if not movie:
             return Response({'error': 'Movie not found.'}, status=status.HTTP_404_NOT_FOUND)
         user_profile = request.user.userprofile
+        # Check if movie is already in watched movies
+        if user_profile.watched_movies.filter(pk=movie.pk).exists():
+            return Response({'error': 'Movie already in your watched movies.'}, status=status.HTTP_400_BAD_REQUEST)
         user_profile.watched_movies.add(movie)
         return Response({'message': f'Movie "{movie.title}" added to your watched movies.'}, status=status.HTTP_200_OK)
 
@@ -112,6 +115,9 @@ def watch_list(request):
         if not movie:
             return Response({'error': 'Movie not found.'}, status=status.HTTP_404_NOT_FOUND)
         user_profile = request.user.userprofile
+        # Check if movie is already in watch list
+        if user_profile.watch_list.filter(pk=movie.pk).exists():
+            return Response({'error': 'Movie already in your watch list.'}, status=status.HTTP_400_BAD_REQUEST)
         user_profile.watch_list.add(movie)
         return Response({'message': f'Movie "{movie.title}" added to your watch list.'}, status=status.HTTP_200_OK)
 
@@ -127,8 +133,7 @@ def recommended_movies_list(request):
         return Response(serializer.data)
     elif request.method == 'UPDATE':
         user_profile = request.user.userprofile
-        user_profile.update_recommendations()
-        recommended = user_profile.recommended_movies.all()
+        recommended = user_profile.update_recommendations()
         serializer = MovieSerializer(recommended, many=True)
         return Response(serializer.data)
     
@@ -140,9 +145,9 @@ def movie_by_id(request):
     if not external_id:
         return Response({'error': 'external_id parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
     
-    movie = get_or_create_movie_from_external_id(external_id)
+    movie = get_or_search_movie_from_external_id(external_id)
     if not movie:
-        return Response({'error': 'Movie not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Movie not found.'}, statwus=status.HTTP_404_NOT_FOUND)
     
     serializer = MovieSerializer(movie)
     return Response(serializer.data)
