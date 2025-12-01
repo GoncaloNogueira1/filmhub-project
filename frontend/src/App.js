@@ -3,8 +3,11 @@ import { Routes, Route } from "react-router-dom";
 import useAuth from "./hooks/useAuth";
 import Layout from "./components/Layout/Layout";
 import RequireAuth from "./components/RequireAuth/RequireAuth";
-import Auth from "./pages/Auth/Auth"; // Ensure this path is correct
+
+import Auth from "./pages/Auth/Auth";
 import MainPage from "./pages/MainPage/MainPage";
+import Recommendations from "./pages/Recommendations/Recommendations";
+
 import "./App.css";
 
 function App() {
@@ -40,6 +43,7 @@ function App() {
 
         <Route element={<RequireAuth />}>
           <Route path="/" element={<MainPage />} />
+          <Route path="/recommendations" element={<Recommendations />} />
         </Route>
       </Route>
     </Routes>

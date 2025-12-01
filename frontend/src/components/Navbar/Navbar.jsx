@@ -1,54 +1,53 @@
-import { useState } from 'react';
-import './Navbar.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Navbar.css";
 
-export default function Navbar({ user, onLogout, onNavigate }) {
+export default function Navbar({ user, onLogout }) {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     onLogout();
   };
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <h1 className="navbar-logo" onClick={() => onNavigate('home')}>
+        <h1 className="navbar-logo" onClick={() => navigate("/")}>
           FilmHub
         </h1>
 
         <div className="navbar-links">
-          <button 
-            className="navbar-link" 
-            onClick={() => onNavigate('home')}
-          >
+          <button className="navbar-link" onClick={() => navigate("/")}>
             Home
           </button>
-          <button 
-            className="navbar-link" 
-            onClick={() => onNavigate('recommendations')}
+          <button
+            className="navbar-link"
+            onClick={() => navigate("/recommendations")}
           >
             Recommendations
           </button>
         </div>
 
         <div className="navbar-user">
-          <button 
+          <button
             className="navbar-user-btn"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            {user?.username || 'User'}
+            {user?.username || "User"}
           </button>
-          
+
           {menuOpen && (
             <div className="navbar-dropdown">
-              <button 
+              <button
                 className="navbar-dropdown-item"
-                onClick={() => onNavigate('my-ratings')}
+                onClick={() => navigate("/ratings")}
               >
                 My Ratings
               </button>
-              <button 
+              <button
                 className="navbar-dropdown-item navbar-logout"
                 onClick={handleLogout}
               >
