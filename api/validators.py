@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 
 from .models import Movie
+from .utils import create_movie_from_external_id
 
 def validate_email(email):
     if '@' not in email:

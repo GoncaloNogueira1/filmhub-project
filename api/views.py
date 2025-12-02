@@ -13,6 +13,7 @@ from .validators import get_or_create_movie_from_external_id, get_or_search_movi
 from .models import Movie, Rating, UserProfile
 from .serializers import UserSerializer, MovieSerializer, RatingSerializer
 from .permissions import IsSuperUserOrReadOnly
+from .utils import update_recommendations
 
 # ****  USER **** #
 
