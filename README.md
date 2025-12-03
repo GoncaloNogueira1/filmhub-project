@@ -40,3 +40,17 @@ _if you want to create a super user in your terminal_
 > make backend
 
 _otherwise_
+
+## Potential problem with the Docker compose
+
+If you can run the docker-compose.yml you will have to give a full access to docker with theses commands :
+
+> sudo groupadd docker
+
+_creates the user group called "docker"_
+
+> sudo usermod -aG docker ${USER}
+
+_gives the admin access_
+
+Now yu just have to restart your machine and run the Makefile, enjoy !!
