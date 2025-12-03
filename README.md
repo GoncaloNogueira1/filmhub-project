@@ -53,4 +53,4 @@ _creates the user group called "docker"_
 
 _gives the admin access_
 
-Now yu just have to restart your machine and run the Makefile, enjoy !!
+Now you just have to restart your machine and run the Makefile, enjoy !!
