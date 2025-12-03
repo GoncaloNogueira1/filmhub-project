@@ -36,13 +36,13 @@ startDB: install
 	docker compose up -d postgres
 	@echo "PostgreSQL database started."
 
-migrate: install startDB wait_for_db
+migrate: install wait_for_db
 	@echo "Running database migrations..."
 	python manage.py makemigrations
 	python manage.py migrate
 	@echo "Database migrations completed."
 
-super_migrate: install startDB wait_for_db
+super_migrate: install wait_for_db
 	@echo "Running database migrations..."
 	python manage.py makemigrations
 	python manage.py migrate
