@@ -30,4 +30,13 @@ urlpatterns = [
 
     # Uncomment the following line to enable router URLs
     # path('', include(router.urls)),
+    
+
+    # JUST A COMMENT TO HELP USING CATALOG AND SEARCH FUNCTIONALITY (http://localhost:8000/api/...) ( you have to use the tokens in auth also)
+    ## search by director: /movies/?search=director_name&search_type=director ( put Steven Spielberg or somehting in the director_name field)
+    ## search by genre: /movies/?search=genre_name&search_type=genre ( put action or somehting in the genre_name field)
+    ## search by title: /movies/?search=title&search_type=title ( put batman or somehting in the title field)
+
+    ## catalog: /movies/ ( shows the catalog of movies with popular, top rated, action, comedy, drama)
+
 ]

@@ -5,7 +5,6 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 import requests
-import time
 
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
@@ -15,7 +14,15 @@ from .validators import get_or_create_movie_from_external_id, get_or_search_movi
 from .models import Movie, Rating, UserProfile
 from .serializers import UserSerializer, MovieSerializer, RatingSerializer
 from .permissions import IsSuperUserOrReadOnly
-from .utils import update_recommendations, API_BASE_URL, API_KEY
+from .utils import (
+    update_recommendations, 
+    API_BASE_URL, 
+    API_KEY, 
+    format_movie, 
+    fetch_movies, 
+    search_by_director, 
+    search_by_genre
+)
 
 # ****  USER **** #
 
@@ -51,7 +58,7 @@ def login(request):
 
 # ****  RATING **** #
 
-@api_view(['GET', 'POST', 'UPDATE'])
+@api_view(['GET', 'POST', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def ratings(request):
     if request.method == 'GET':
@@ -76,9 +83,21 @@ def ratings(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    elif request.method == 'UPDATE':
-        # TODO: Implement update logic for ratings
-        serializer = RatingSerializer(data=request.data)
+    elif request.method == 'PATCH':
+        # Update existing rating by movie external_id
+        movie_external_id = request.data.get('movie')
+        if not movie_external_id:
+            return Response({'error': 'Movie external_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            rating = Rating.objects.get(id=rating_id, user=request.user)
+        except Rating.DoesNotExist:
+            return Response({'error': 'Rating not found. You need to create a rating first using POST.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = RatingSerializer(rating, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # **** WATCHED MOVIES **** #
@@ -148,82 +167,62 @@ def movie_by_id(request):
     if not external_id:
         return Response({'error': 'external_id parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
     
-    movie = get_or_search_movie_from_external_id(external_id)
+    # This will fetch from API if movie doesn't exist in database
+    movie = get_or_create_movie_from_external_id(external_id)
     if not movie:
-        return Response({'error': 'Movie not found.'}, statwus=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Movie not found.'}, status=status.HTTP_404_NOT_FOUND)
     
     serializer = MovieSerializer(movie)
     return Response(serializer.data)
 
 # **** MOVIES CATALOG **** #
 
-GENRE_MAP = {
-    28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy",
-    80: "Crime", 99: "Documentary", 18: "Drama", 10751: "Family",
-    14: "Fantasy", 36: "History", 27: "Horror", 10402: "Music",
-    9648: "Mystery", 10749: "Romance", 878: "Science Fiction",
-    10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western",
-}
-
-# This view is used to get the movies catalog or search 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def movies_catalog(request):
-    search_query = request.GET.get('search', '').strip()
+    search = request.GET.get('search', '').strip()
+    search_type = request.GET.get('search_type', 'title').strip().lower()
 
-    # We need to decide how many pages we want to search , beacuse if it is like a genre it will have lots and lots of movies
-    if search_query:
-        url = f"{API_BASE_URL}/search/movie"
-        params = {"api_key": API_KEY, "query": search_query, "page": 1}
-        response = requests.get(url, params=params)
-        data = response.json()
-        all_results = data.get('results', [])
+    # handle search
+    if search:
+        if search_type == 'director':
+            movies = search_by_director(search)
+        elif search_type == 'genre':
+            movies = search_by_genre(search)
+        else:
+            # default is title search
+            url = f"{API_BASE_URL}/search/movie"
+            params = {"api_key": API_KEY, "query": search, "page": 1}
+            movies = fetch_movies(url, params, limit=20)
         
-        result = []
-        for movie in all_results:
-            genre_ids = movie.get('genre_ids', [])
-            genres = [GENRE_MAP.get(gid, "Unknown") for gid in genre_ids]
-            release_date = movie.get('release_date', '')
-            year = int(release_date.split('-')[0]) if release_date else None
-            poster_path = movie.get('poster_path')
-            poster_url = f"https://image.tmdb.org/t/p/w185{poster_path}" if poster_path else None
-            
-            result.append({
-                "external_id": movie.get('id'),
-                "title": movie.get('title', ''),
-                "poster_url": poster_url,
-                "genre": ", ".join(genres) if genres else "Unknown",
-                "year": year,
-                "average_rating": round(movie.get('vote_average', 0), 1),
-            })
-        return Response(result)
+        return Response(movies)
     
-    all_movies = []
-    for page in range(1, 6):
-        url = f"{API_BASE_URL}/movie/popular"
-        params = {"api_key": API_KEY, "page": page}
-        response = requests.get(url, params=params)
-        data = response.json()
-        all_movies.extend(data.get('results', []))
-        if len(all_movies) >= 100:
-            break
+    # return catalog with different sections
+    catalog = {}
     
-    result = []
-    for movie in all_movies[:100]:
-        genre_ids = movie.get('genre_ids', [])
-        genres = [GENRE_MAP.get(gid, "Unknown") for gid in genre_ids]
-        release_date = movie.get('release_date', '')
-        year = int(release_date.split('-')[0]) if release_date else None
-        poster_path = movie.get('poster_path')
-        poster_url = f"https://image.tmdb.org/t/p/w185{poster_path}" if poster_path else None
-        
-        result.append({
-            "external_id": movie.get('id'),
-            "title": movie.get('title', ''),
-            "poster_url": poster_url,
-            "genre": ", ".join(genres) if genres else "Unknown",
-            "year": year,
-            "average_rating": round(movie.get('vote_average', 0), 1),
-        })
+    # popular movies
+    url = f"{API_BASE_URL}/movie/popular"
+    params = {"api_key": API_KEY, "page": 1}
+    catalog["popular"] = fetch_movies(url, params, limit=20)
     
-    return Response(result)
+    # top rated
+    url = f"{API_BASE_URL}/movie/top_rated"
+    params = {"api_key": API_KEY, "page": 1}
+    catalog["top_rated"] = fetch_movies(url, params, limit=20)
+    
+    # action
+    url = f"{API_BASE_URL}/discover/movie"
+    params = {"api_key": API_KEY, "with_genres": 28, "sort_by": "popularity.desc", "page": 1}
+    catalog["action"] = fetch_movies(url, params, limit=20)
+    
+    # comedy
+    url = f"{API_BASE_URL}/discover/movie"
+    params = {"api_key": API_KEY, "with_genres": 35, "sort_by": "popularity.desc", "page": 1}
+    catalog["comedy"] = fetch_movies(url, params, limit=20)
+    
+    # drama
+    url = f"{API_BASE_URL}/discover/movie"
+    params = {"api_key": API_KEY, "with_genres": 18, "sort_by": "popularity.desc", "page": 1}
+    catalog["drama"] = fetch_movies(url, params, limit=20)
+    
+    return Response(catalog)
