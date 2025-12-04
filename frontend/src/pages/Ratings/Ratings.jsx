@@ -55,7 +55,7 @@ export default function Ratings() {
           <h1 className="ratings-title">My Ratings</h1>
           <p className="ratings-subtitle">Movies you've rated and reviewed</p>
         </header>
-
+        {console.log(ratings)}
         <main className="ratings-movies">
           <MovieList
             title=""

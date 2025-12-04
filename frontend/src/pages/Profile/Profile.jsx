@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { authService } from "../../services/authService";
 import { AuthInput } from "../Auth/AuthInput";
@@ -7,7 +6,6 @@ import "./Profile.css";
 
 export default function Profile() {
   const { auth, setAuth } = useAuth();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState("");
