@@ -43,7 +43,7 @@ class MovieSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
     class Meta:
         model = Movie
-        fields = ['external_id', 'title', 'poster_url', 'description', 'genre', 'keyword', 'year', 'duration', 'average_rating']
+        fields = ['external_id', 'title', 'poster_url', 'description', 'director', 'genre', 'keyword', 'year', 'duration', 'average_rating']
 
     def get_average_rating(self, obj):
         avg = obj.rating_set.aggregate(Avg('score'))['score__avg']
