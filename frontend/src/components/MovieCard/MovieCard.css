@@ -84,10 +84,11 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 .star {
-  font-size: 14px;
+  font-size: 11px;
 }
 
 .star-filled {
@@ -122,6 +123,7 @@
   align-items: center;
   gap: 5px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .your-rating-label {
@@ -131,7 +133,8 @@
 
 .your-rating-stars {
   display: flex;
-  gap: 2px;
+  gap: 1px;
+  flex-wrap: wrap;
 }
 
 .rate-button {
@@ -169,8 +172,9 @@
 }
 
 .rating-options {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
   justify-content: center;
   margin-bottom: 10px;
 }
@@ -179,10 +183,10 @@
   background-color: #f5f5f5;
   border: 2px solid #ddd;
   color: #333;
-  width: 35px;
-  height: 35px;
+  width: 100%;
+  height: 32px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;

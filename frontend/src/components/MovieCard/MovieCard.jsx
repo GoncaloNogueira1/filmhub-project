@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import "./MovieCard.css";
 
-export default function MovieCard({ movie, onSelect }) {
+export default function MovieCard({ movie }) {
   const navigate = useNavigate();
   const userRating = movie.user_rating || 0;
 
   const renderStars = (rating) => {
     const stars = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       const filled = i <= Math.round(rating);
       stars.push(
         <span
@@ -23,19 +23,17 @@ export default function MovieCard({ movie, onSelect }) {
 
   return (
     <div className="movie-card">
-      {/* TODO: Adapt to the movie object */}
       <div
         className="movie-card-poster"
-        onClick={() => navigate("/movie/" + movie.id)}
+        onClick={() => navigate(`/movie/${movie.external_id}`)}
       >
         {movie.poster_url ? (
           <img src={movie.poster_url} alt={movie.title} />
         ) : (
-          <div className="movie-card-placeholder"></div>
+          <div className="movie-card-placeholder">
+            <span></span>
+          </div>
         )}
-        <div className="movie-card-overlay">
-          <span>View Details</span>
-        </div>
       </div>
 
       <div className="movie-card-info">
@@ -48,7 +46,7 @@ export default function MovieCard({ movie, onSelect }) {
 
         <div className="movie-card-rating">
           <div className="movie-card-avg-rating">
-            {renderStars(movie.average_rating)}
+            {renderStars(movie.average_rating || 0)}
             <span className="rating-value">
               {movie.average_rating?.toFixed(1) || "N/A"}
             </span>

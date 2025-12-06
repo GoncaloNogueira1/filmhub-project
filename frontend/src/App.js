@@ -6,6 +6,7 @@ import RequireAuth from "./components/RequireAuth/RequireAuth";
 
 import Auth from "./pages/Auth/Auth";
 import MainPage from "./pages/MainPage/MainPage";
+import MovieDetails from "./pages/MovieDetails/MovieDetails";
 import Recommendations from "./pages/Recommendations/Recommendations";
 import Profile from "./pages/Profile/Profile";
 import Ratings from "./pages/Ratings/Ratings";
@@ -45,6 +46,7 @@ function App() {
 
         <Route element={<RequireAuth />}>
           <Route path="/" element={<MainPage />} />
+          <Route path="/movie/:movieId" element={<MovieDetails />} />
           <Route path="/recommendations" element={<Recommendations />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/ratings" element={<Ratings />} />

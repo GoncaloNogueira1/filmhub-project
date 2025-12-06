@@ -20,17 +20,36 @@ export const movieService = {
     return response.json();
   },
 
-  // Get specific movie by external_id
   getMovie: async (external_id) => {
-    const response = await fetch(`${API_URL}/movie/`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ external_id }),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch movie');
+    try {
+      const response = await fetch(`${API_URL}/movies/`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch movies (${response.status})`);
+      }
+      
+      const catalog = await response.json();
+      
+      // Search through all catalog sections for the movie
+      let foundMovie = null;
+      for (const section in catalog) {
+        if (Array.isArray(catalog[section])) {
+          foundMovie = catalog[section].find(m => m.external_id === parseInt(external_id));
+          if (foundMovie) break;
+        }
+      }
+      
+      if (!foundMovie) {
+        throw new Error('Movie not found in catalog');
+      }
+      
+      return foundMovie;
+    } catch (error) {
+      throw error;
     }
-    return response.json();
   },
 
   // Search movies by title (default), director, or genre
