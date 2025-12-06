@@ -22,7 +22,7 @@ urlpatterns = [
     path('movies/watch_list/', watch_list, name='watch-list'),
     
     # Recommended Movies endpoints
-    path('movies/recommended/', recommended_movies_list, name='recommended_movies'),
+    path('recommended_movies/', recommended_movies_list, name='recommended_movies'),
 
     # **** RATINGS **** #
     # Ratings endpoint
