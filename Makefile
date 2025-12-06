@@ -2,9 +2,9 @@
 
 # **** BACKEND TARGETS **** #
 
-backend : install startDB migrate test run clear
+backend : install startDB migrate run clear
 
-super_backend : install startDB super_migrate test run clear
+super_backend : install startDB super_migrate run clear
 
 install:
 	@echo "NOTE : You first need to set up a virtual environment."
@@ -26,7 +26,7 @@ wait_for_db: install
 		echo "Waiting for PostgreSQL ($$i/10)..."; \
 		sleep 5; \
 	done
-	if [ $$SUCCESS_FLAG -ne 0 ]; then \
+	if [ "$$SUCCESS_FLAG" -ne 0 ]; then \
 		echo "PostgreSQL failed to start after 50 seconds. Exiting."; \
 		exit 1; \
 	fi
@@ -56,12 +56,13 @@ run: install startDB wait_for_db
 
 test: install startDB wait_for_db
 	@echo "Running tests..."
-	python manage.py test api
+	python manage.py test api.tests
 	@echo "Tests completed."
 
 clear:
 	@echo "Cleaning up DB files and Docker container..."
 	rm -f *.sqlite3
+	rm -rf api/__pycache__
 	find ./api/migrations ! -name '__init__.py' -type f -exec rm -f {} +
 	docker compose down -v
 	@echo "Cleanup completed."

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Movie, Rating
 from django.contrib.auth.models import User
-from .validators import (validate_email, validate_email_unique, validate_password_strength, validate_unique_movie, validate_username)
+from .validators.shared import (validate_email, validate_email_unique, validate_password_strength, validate_unique_movie, validate_username)
 from django.db.models import Avg
 
 class UserSerializer(serializers.ModelSerializer):
@@ -50,14 +50,11 @@ class MovieSerializer(serializers.ModelSerializer):
         return round(avg, 2) if avg is not None else None
 
     def validate(self, data):
-        """
-        Prevent creation of a movie with the exact same (title, description, genre, year).
-        For updates, make sure the new values don't collide with another existing movie.
-        """
         # Build lookup values: handles missing data during updates
         title = data.get('title', getattr(self.instance, 'title', None))
         poster_url = data.get('poster_url', getattr(self.instance, 'poster_url', None))
         description = data.get('description', getattr(self.instance, 'description', None))
+        director = data.get('director', getattr(self.instance, 'director', None))
         genre = data.get('genre', getattr(self.instance, 'genre', None))
         keyword = data.get('keyword', getattr(self.instance, 'keyword', None))
         duration = data.get('duration', getattr(self.instance, 'duration', None))
@@ -68,6 +65,7 @@ class MovieSerializer(serializers.ModelSerializer):
             title=title,
             poster_url=poster_url,
             description=description,
+            director=director,
             genre=genre,
             keyword=keyword,
             duration=duration,
