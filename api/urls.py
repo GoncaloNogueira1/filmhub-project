@@ -41,5 +41,4 @@ urlpatterns = [
     ## search by title: /movies/?search=title&search_type=title ( put batman or somehting in the title field)
 
     ## catalog: /movies/ ( shows the catalog of movies with popular, top rated, action, comedy, drama)
-
 ]
