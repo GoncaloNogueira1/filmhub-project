@@ -109,7 +109,12 @@ export default function Auth() {
 
   return (
     <div className="auth-container">
-      <h1 className="auth-title">FilmHub</h1>
+      <div className="auth-header">
+        <h1 className="auth-title">FilmHub</h1>
+        <p className="auth-subtitle">
+          Discover your next favorite movie – rate, explore, and get smart recommendations!
+        </p>
+      </div>
 
       <div className="auth-box">
         <h2 className="auth-heading">{isLogin ? "Login" : "Create Account"}</h2>
