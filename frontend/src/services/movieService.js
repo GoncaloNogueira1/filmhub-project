@@ -133,18 +133,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Update recommendations (trigger recalculation)
-  updateRecommendations: async () => {
-    const response = await fetch(`${API_URL}/movies/recommended/`, {
-      method: 'UPDATE',
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to update recommendations');
-    }
-    return response.json();
-  },
-
   // Get watchlist
   getWatchList: async () => {
     const response = await fetch(`${API_URL}/movies/watch_list/`, {
