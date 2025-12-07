@@ -84,7 +84,7 @@ export default function Ratings() {
       <div className="ratings-content">
         <header className="ratings-header">
           <h1 className="ratings-title">My Ratings</h1>
-          <p className="ratings-subtitle">Movies you've rated and reviewed</p>
+          <p className="ratings-subtitle">Movies you've rated!</p>
         </header>
         
         <main className="ratings-movies">

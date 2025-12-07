@@ -1,0 +1,51 @@
+.recommendations-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.recommendations-content {
+  padding-top: 60px;
+}
+
+.recommendations-header {
+  background-color: #1a1a2e;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.recommendations-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 10px 0;
+}
+
+.recommendations-subtitle {
+  font-size: 16px;
+  color: #b0b0b0;
+  margin: 0;
+}
+
+.recommendations-movies {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+@media (max-width: 768px) {
+  .recommendations-header {
+    padding: 40px 15px;
+  }
+  
+  .recommendations-title {
+    font-size: 24px;
+  }
+  
+  .recommendations-subtitle {
+    font-size: 14px;
+  }
+  
+  .recommendations-movies {
+    padding: 20px 15px;
+  }
+}
