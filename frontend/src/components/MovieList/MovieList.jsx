@@ -7,6 +7,7 @@ export default function MovieList({
   loading,
   error,
   onRate,
+  ratings = [],
   emptyMessage = "No movies found",
 }) {
   if (loading) {
@@ -49,7 +50,12 @@ export default function MovieList({
       {title && <h2 className="movie-list-title">{title}</h2>}
       <div className="movie-list-grid">
         {movies.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} onRate={onRate} />
+          <MovieCard 
+            key={movie.id} 
+            movie={movie} 
+            onRate={onRate}
+            userRatings={ratings}
+          />
         ))}
       </div>
     </div>

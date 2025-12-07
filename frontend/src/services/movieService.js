@@ -141,6 +141,53 @@ export const movieService = {
     return response.json();
   },
 
+  rateOrUpdateMovie: async (movieId, score, comment = '') => {
+  if (score < 1 || score > 10) {
+    throw new Error('Rating must be between 1 and 10');
+  }
+  
+  try {
+      const response = await fetch(`${API_URL}/ratings/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ 
+          movie: movieId, 
+          score: score,
+          comment: comment 
+        }),
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      
+      const error = await response.json();
+      
+      if (error.error && error.error.includes('already exists')) {
+        const updateResponse = await fetch(`${API_URL}/ratings/`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ 
+            movie: movieId, 
+            score: score,
+            comment: comment 
+          }),
+        });
+        
+        if (!updateResponse.ok) {
+          const updateError = await updateResponse.json();
+          throw new Error(updateError.error || 'Failed to update rating');
+        }
+        
+        return await updateResponse.json();
+      }
+      throw new Error(error.error || error.message || 'Failed to rate movie');
+    } catch (error) {
+    console.error('Error in rateOrUpdateMovie:', error);
+    throw error;
+    }
+  },
+
   // Get recommendations
   getRecommendations: async () => {
     const response = await fetch(`${API_URL}/recommended_movies/`, {

@@ -20,8 +20,19 @@ export default function MainPage() {
   const [moviesLoading, setMoviesLoading] = useState(true);
   const [recommendations, setRecommendations] = useState([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+  const [ratings, setRatings] = useState([]);
   const [moviesError, setMoviesError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const loadRatings = useCallback(async () => {
+    try {
+      const ratingsData = await movieService.getRatings();
+      setRatings(Array.isArray(ratingsData) ? ratingsData : []);
+    } catch (err) {
+      console.error("Error loading ratings:", err);
+      setRatings([]);
+    }
+  }, []);
 
   const loadMovies = useCallback(async () => {
     setMoviesLoading(true);
@@ -61,8 +72,8 @@ export default function MainPage() {
   }, []);
 
   const loadInitialData = useCallback(async () => {
-    await Promise.all([loadMovies(), loadRecommendations()]);
-  }, [loadMovies, loadRecommendations]);
+    await Promise.all([loadMovies(), loadRecommendations(), loadRatings()]);
+  }, [loadMovies, loadRecommendations, loadRatings]);
 
   useEffect(() => {
     loadInitialData();
@@ -94,8 +105,8 @@ export default function MainPage() {
 
   const handleRate = async (movieId, rating, comment = '') => {
     try {
-      await movieService.rateMovie(movieId, rating, comment);
-      await Promise.all([loadMovies(), loadRecommendations()]);
+      await movieService.rateOrUpdateMovie(movieId, rating, comment);
+      await Promise.all([loadMovies(), loadRecommendations(), loadRatings()]);
     } catch (err) {
       console.error("Error rating movie:", err);
       alert(err.message || "Error rating movie. Please try again.");
@@ -120,7 +131,7 @@ export default function MainPage() {
             Welcome back, {auth.user?.username || "User"}!
           </h1>
           <p className="main-subtitle">
-            Discover your next favorite movie – rate, explore, and get smart
+            Discover your next favorite movie — rate, explore, and get smart
             recommendations!
           </p>
           <SearchBar onSearch={handleSearch} />
@@ -138,6 +149,7 @@ export default function MainPage() {
                   movies={searchResults}
                   loading={false}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               ) : (
                 <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -169,6 +181,7 @@ export default function MainPage() {
                   movies={recommendations}
                   loading={false}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 
@@ -179,6 +192,7 @@ export default function MainPage() {
                   movies={catalog.popular}
                   loading={moviesLoading}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 
@@ -189,6 +203,7 @@ export default function MainPage() {
                   movies={catalog.top_rated}
                   loading={moviesLoading}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 
@@ -199,6 +214,7 @@ export default function MainPage() {
                   movies={catalog.action}
                   loading={moviesLoading}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 
@@ -209,6 +225,7 @@ export default function MainPage() {
                   movies={catalog.comedy}
                   loading={moviesLoading}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 
@@ -219,6 +236,7 @@ export default function MainPage() {
                   movies={catalog.drama}
                   loading={moviesLoading}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 
@@ -229,6 +247,7 @@ export default function MainPage() {
                   movies={getAllMovies()}
                   loading={false}
                   onRate={handleRate}
+                  ratings={ratings}
                 />
               )}
 

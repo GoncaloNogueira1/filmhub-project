@@ -23,7 +23,11 @@ export default function MovieDetails() {
     try {
       const movieData = await movieService.getMovie(movieId);
       setMovie(movieData);
-      setUserRating(movieData.user_rating || 0);
+      
+      // Buscar o rating do utilizador
+      const ratings = await movieService.getRatings();
+      const userRatingObj = ratings.find(r => r.movie === parseInt(movieId));
+      setUserRating(userRatingObj ? userRatingObj.score : 0);
     } catch (err) {
       setError('Error loading movie details. Please try again.');
     } finally {
@@ -48,7 +52,7 @@ export default function MovieDetails() {
   const handleSubmitRating = async () => {
     if (selectedRating > 0) {
       try {
-        await movieService.rateMovie(movieId, selectedRating);
+        await movieService.rateOrUpdateMovie(parseInt(movieId), selectedRating);
         setUserRating(selectedRating);
         handleCloseRatingModal();
         loadMovieDetails();
@@ -125,6 +129,7 @@ export default function MovieDetails() {
                 <img src={movie.poster_url} alt={movie.title} />
               ) : (
                 <div className="movie-details-poster-placeholder">
+                  🎬
                 </div>
               )}
             </div>
@@ -134,7 +139,7 @@ export default function MovieDetails() {
 
               <div className="movie-details-meta">
                 <div className="meta-item">
-                  <span className="meta-icon"></span>
+                  <span className="meta-icon">📅</span>
                   <span>{movie.year}</span>
                 </div>
                 <div className="meta-item">
@@ -142,7 +147,7 @@ export default function MovieDetails() {
                 </div>
                 {movie.duration && (
                   <div className="meta-item">
-                    <span className="meta-icon"></span>
+                    <span className="meta-icon">⏱</span>
                     <span>{movie.duration} min</span>
                   </div>
                 )}
@@ -153,7 +158,7 @@ export default function MovieDetails() {
                   <span className="rating-label">Average Rating</span>
                   <div className="rating-display">
                     <div className="rating-stars">
-                      {renderStars(movie.average_rating)}
+                      {renderStars(movie.average_rating || 0)}
                     </div>
                     <span className="rating-number">
                       {movie.average_rating?.toFixed(1) || 'N/A'}
@@ -169,11 +174,15 @@ export default function MovieDetails() {
                 <div className="rating-block">
                   <span className="rating-label">Your Rating</span>
                   <div className="rating-display">
-                    <div className="rating-stars">
-                      {renderStars(userRating)}
-                    </div>
-                    {userRating > 0 && (
-                      <span className="rating-number">{userRating}</span>
+                    {userRating > 0 ? (
+                      <>
+                        <div className="rating-stars">
+                          {renderStars(userRating)}
+                        </div>
+                        <span className="rating-number">{userRating}</span>
+                      </>
+                    ) : (
+                      <span className="rating-none">Not rated yet</span>
                     )}
                     <button 
                       className="rate-movie-button" 

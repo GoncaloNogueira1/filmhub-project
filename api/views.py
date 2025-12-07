@@ -76,29 +76,111 @@ def ratings_view(request):
         return Response({'error': 'Could not fetch ratings.'}, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == 'POST':
-        # Add user to the data before creating the serializer
-        data = request.data.copy()
-        data['user'] = request.user.id
-        serializer = RatingSerializer(data=data)
-        if serializer.is_valid():
-            rating, response_status = add_rating(serializer)
-            if response_status == Status.SUCCESS:
-                return Response(RatingSerializer(rating).data, status=status.HTTP_201_CREATED)
-            elif response_status == Status.ALREADY_EXISTS:
-                return Response({'error': 'Rating for this movie already exists. Use PATCH to update.'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Get movie external_id from request
+        movie_external_id = request.data.get('movie')
+        
+        if not movie_external_id:
+            return Response({'error': 'Movie ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create movie if it doesn't exist
+        movie = get_or_create_movie_from_external_id(movie_external_id)
+        
+        if not movie:
+            return Response({'error': 'Could not find or create movie.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if rating already exists
+        existing_rating = Rating.objects.filter(
+            user=request.user,
+            movie=movie
+        ).first()
+        
+        if existing_rating:
+            return Response(
+                {'error': 'Rating for this movie already exists. Use PATCH to update.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create the rating directly
+        score = request.data.get('score')
+        comment = request.data.get('comment', '')
+        
+        # Validate score
+        try:
+            score = int(score)
+            if score < 1 or score > 10:
+                return Response(
+                    {'error': 'Score must be between 1 and 10.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid score value.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create rating - Django ForeignKey needs the actual model instance
+        try:
+            rating = Rating.objects.create(
+                user=request.user,
+                movie=movie,  # Pass the movie object, Django will extract the FK
+                score=score,
+                comment=comment
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to create rating: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        serializer = RatingSerializer(rating)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     elif request.method == 'PATCH':
-        data = request.data.copy()
-        data['user'] = request.user.id
-        serializer = RatingSerializer(data=data)
-        if serializer.is_valid():
-            rating, response_status = update_rating(serializer)
-            if response_status == Status.SUCCESS:
-                return Response(RatingSerializer(rating).data, status=status.HTTP_200_OK)
-            elif response_status == Status.NOT_FOUND:
-                return Response({'error': 'Rating not found. Cannot update non-existing rating.'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Get movie external_id from request
+        movie_external_id = request.data.get('movie')
+        
+        if not movie_external_id:
+            return Response({'error': 'Movie ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get or create movie
+        movie = get_or_create_movie_from_external_id(movie_external_id)
+        
+        if not movie:
+            return Response({'error': 'Could not find or create movie.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Find existing rating
+        try:
+            rating = Rating.objects.get(user=request.user, movie=movie)
+        except Rating.DoesNotExist:
+            return Response(
+                {'error': 'Rating not found. Cannot update non-existing rating.'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Update rating
+        score = request.data.get('score')
+        comment = request.data.get('comment', rating.comment)
+        
+        # Validate score
+        try:
+            score = int(score)
+            if score < 1 or score > 10:
+                return Response(
+                    {'error': 'Score must be between 1 and 10.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid score value.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        rating.score = score
+        rating.comment = comment
+        rating.save()
+        
+        serializer = RatingSerializer(rating)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])

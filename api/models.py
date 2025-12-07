@@ -36,7 +36,7 @@ class Movie(models.Model):
 class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
-    score = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    score = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     comment = models.TextField(blank=True)
 
     def __str__(self):
