@@ -20,17 +20,36 @@ export const movieService = {
     return response.json();
   },
 
-  // Get specific movie by external_id
   getMovie: async (external_id) => {
-    const response = await fetch(`${API_URL}/movie/`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ external_id }),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch movie');
+    try {
+      const response = await fetch(`${API_URL}/movies/`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch movies (${response.status})`);
+      }
+      
+      const catalog = await response.json();
+      
+      // Search through all catalog sections for the movie
+      let foundMovie = null;
+      for (const section in catalog) {
+        if (Array.isArray(catalog[section])) {
+          foundMovie = catalog[section].find(m => m.external_id === parseInt(external_id));
+          if (foundMovie) break;
+        }
+      }
+      
+      if (!foundMovie) {
+        throw new Error('Movie not found in catalog');
+      }
+      
+      return foundMovie;
+    } catch (error) {
+      throw error;
     }
-    return response.json();
   },
 
   // Search movies by title (default), director, or genre
@@ -120,6 +139,53 @@ export const movieService = {
       throw new Error(error.error || 'Failed to update rating');
     }
     return response.json();
+  },
+
+  rateOrUpdateMovie: async (movieId, score, comment = '') => {
+  if (score < 1 || score > 10) {
+    throw new Error('Rating must be between 1 and 10');
+  }
+  
+  try {
+      const response = await fetch(`${API_URL}/ratings/`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ 
+          movie: movieId, 
+          score: score,
+          comment: comment 
+        }),
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      
+      const error = await response.json();
+      
+      if (error.error && error.error.includes('already exists')) {
+        const updateResponse = await fetch(`${API_URL}/ratings/`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ 
+            movie: movieId, 
+            score: score,
+            comment: comment 
+          }),
+        });
+        
+        if (!updateResponse.ok) {
+          const updateError = await updateResponse.json();
+          throw new Error(updateError.error || 'Failed to update rating');
+        }
+        
+        return await updateResponse.json();
+      }
+      throw new Error(error.error || error.message || 'Failed to rate movie');
+    } catch (error) {
+    console.error('Error in rateOrUpdateMovie:', error);
+    throw error;
+    }
   },
 
   // Get recommendations

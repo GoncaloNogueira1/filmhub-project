@@ -55,7 +55,7 @@ export default function MovieDetails({ movieId, user, onLogout, onBack }) {
 
   const renderStars = (rating, size = 20) => {
     const stars = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       const filled = i <= Math.round(rating);
       stars.push(
         <span
@@ -217,11 +217,11 @@ export default function MovieDetails({ movieId, user, onLogout, onBack }) {
           >
             <h2 className="rating-modal-title">Rate {movie.title}</h2>
             <p className="rating-modal-subtitle">
-              Select a rating from 1 to 5 stars
+              Select a rating from 1 to 10 stars
             </p>
 
             <div className="rating-options">
-              {[1, 2, 3, 4, 5].map((rating) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
                 <button
                   key={rating}
                   className={`rating-option ${selectedRating === rating ? 'selected' : ''}`}
