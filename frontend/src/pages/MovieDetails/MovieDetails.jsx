@@ -129,7 +129,6 @@ export default function MovieDetails() {
                 <img src={movie.poster_url} alt={movie.title} />
               ) : (
                 <div className="movie-details-poster-placeholder">
-                  🎬
                 </div>
               )}
             </div>
@@ -139,7 +138,7 @@ export default function MovieDetails() {
 
               <div className="movie-details-meta">
                 <div className="meta-item">
-                  <span className="meta-icon">📅</span>
+                  <span className="meta-icon"></span>
                   <span>{movie.year}</span>
                 </div>
                 <div className="meta-item">
