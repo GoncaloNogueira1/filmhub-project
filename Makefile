@@ -2,9 +2,9 @@
 
 # **** BACKEND TARGETS **** #
 
-backend : install startDB migrate run clear
+backend : clear install startDB migrate run 
 
-super_backend : install startDB super_migrate run clear
+super_backend : clear install startDB super_migrate run 
 
 install:
 	@echo "NOTE : You first need to set up a virtual environment."
