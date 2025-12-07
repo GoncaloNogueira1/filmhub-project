@@ -103,13 +103,6 @@ export default function Navbar({ user, onLogout }) {
               My Ratings
             </button>
             <button
-              className="navbar-dropdown-item"
-              onClick={() => handleNavigate("/profile")}
-              role="menuitem"
-            >
-              Profile
-            </button>
-            <button
               className="navbar-dropdown-item navbar-logout"
               onClick={handleLogout}
               role="menuitem"
