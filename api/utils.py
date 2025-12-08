@@ -20,10 +20,6 @@ GENRE_POINTS = 1
 KEYWORD_MAP = {}
 KEYWORD_POINTS = 3
 
-def print_maps():
-    print("GENRE_MAP:", GENRE_MAP)
-    print("KEYWORD_MAP:", KEYWORD_MAP)
-
 # **** STATUS **** #
 
 class Status(Enum):
@@ -124,12 +120,8 @@ def update_recommendations(user_profile):
         if keyword_name in keyword_name_to_id:
             liked_keyword_ids.append(keyword_name_to_id[keyword_name])
     
-    print(f"DEBUG: Liked genre IDs: {liked_genre_ids}")
-    print(f"DEBUG: Liked keyword IDs: {liked_keyword_ids}")
-    
     # If no genres or keywords found, return empty
     if not liked_genre_ids and not liked_keyword_ids:
-        print("DEBUG: No genres or keywords found!")
         return user_profile.recommended_movies.all()
     
     # Construct the header
@@ -163,10 +155,7 @@ def update_recommendations(user_profile):
                     recommended_set[movie_id] = GENRE_POINTS
                 else:
                     recommended_set[movie_id] += GENRE_POINTS
-                    
-            print(f"DEBUG: Found {len(data.get('results', []))} movies for genre {genre_id}")
         except Exception as e:
-            print(f"DEBUG: Error fetching genre {genre_id}: {e}")
             continue
     
     # Search by keywords
@@ -193,13 +182,8 @@ def update_recommendations(user_profile):
                     recommended_set[movie_id] = KEYWORD_POINTS
                 else:
                     recommended_set[movie_id] += KEYWORD_POINTS
-                    
-            print(f"DEBUG: Found {len(data.get('results', []))} movies for keyword {keyword_id}")
         except Exception as e:
-            print(f"DEBUG: Error fetching keyword {keyword_id}: {e}")
             continue
-    
-    print(f"DEBUG: Total unique movies found: {len(recommended_set)}")
     
     # Sort recommended movies by their accumulated score
     sorted_recommendations = sorted(
@@ -235,7 +219,6 @@ def update_recommendations(user_profile):
             if added_count >= 20:
                 break
     
-    print(f"DEBUG: Added {added_count} recommendations")
     return user_profile.recommended_movies.all()
 
 # **** WATCHED MOVIES **** #
@@ -358,24 +341,16 @@ def create_movie_from_external_id(movie_id):
             release_date = data.get('release_date')
             movie.year = int(release_date.split('-')[0]) if release_date else 0
 
-            print_maps()
-
             # Save the new movie to the database
             movie.save()
             return movie, Status.SUCCESS
         except requests.exceptions.HTTPError as e:
-            # Handle specific HTTP errors (e.g., 404 Not Found)
-            print(f"API HTTP Error for ID {movie_id}: {e}")
             return None, Status.FAILURE
             
         except requests.exceptions.RequestException as e:
-            # Handle connection errors, timeouts, etc.
-            print(f"API Connection Error: {e}")
             return None, Status.FAILURE
             
         except Exception as e:
-            # Handle JSON parsing or other general errors
-            print(f"General Error processing movie {movie_id}: {e}")
             return None, Status.FAILURE
 
 # **** MOVIE CATALOG **** #
