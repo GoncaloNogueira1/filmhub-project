@@ -87,33 +87,61 @@ def update_rating(rating: RatingSerializer):
 
 def get_recommended_movies_for_user(user_profile):
     return user_profile.recommended_movies.all(), Status.SUCCESS
-    
-def update_recommendations(self):
-        # Clear existing recommendations
-        self.recommended_movies.clear()
 
-        # Retrieve rated movies by the user
-        ratings = self.user.rating_set.all()
-        # Define the main conditions for the recommendation logic
-        liked_genres = set()
-        liked_keywords = set()
-        for rating in ratings:
-            movie = rating.movie
-            if rating.score >= 3:
-                # Extract genres
-                movie_genres = [g.strip() for g in movie.genre.split(',')]
-                liked_genres.update(movie_genres)
-                # Extract keywords
-                movie_keywords = [k.strip() for k in movie.keyword.split(',')]
-                liked_keywords.update(movie_keywords)
-        # Find movies that match liked genres or keywords
-        # Construct the header
-        headers = {
-            "accept": "application/json",
-        }
-        
-        recommended_set = {}
-        for genre_id in liked_genres:
+
+def update_recommendations(user_profile):
+    # Clear existing recommendations
+    user_profile.recommended_movies.clear()
+
+    # Retrieve rated movies by the user
+    ratings = user_profile.user.rating_set.all()
+    
+    # Define the main conditions for the recommendation logic
+    liked_genre_names = set()
+    liked_keyword_names = set()
+    
+    for rating in ratings:
+        movie = rating.movie
+        if rating.score >= 6:
+            # Extract genre names
+            movie_genres = [g.strip() for g in movie.genre.split(',') if g.strip()]
+            liked_genre_names.update(movie_genres)
+            # Extract keyword names
+            movie_keywords = [k.strip() for k in movie.keyword.split(',') if k.strip()]
+            liked_keyword_names.update(movie_keywords)
+    
+    # Convert genre names back to IDs (invert GENRE_MAP)
+    genre_name_to_id = {v: k for k, v in GENRE_MAP.items()}
+    liked_genre_ids = []
+    for genre_name in liked_genre_names:
+        if genre_name in genre_name_to_id:
+            liked_genre_ids.append(genre_name_to_id[genre_name])
+    
+    # Convert keyword names back to IDs (invert KEYWORD_MAP)
+    keyword_name_to_id = {v: k for k, v in KEYWORD_MAP.items()}
+    liked_keyword_ids = []
+    for keyword_name in liked_keyword_names:
+        if keyword_name in keyword_name_to_id:
+            liked_keyword_ids.append(keyword_name_to_id[keyword_name])
+    
+    print(f"DEBUG: Liked genre IDs: {liked_genre_ids}")
+    print(f"DEBUG: Liked keyword IDs: {liked_keyword_ids}")
+    
+    # If no genres or keywords found, return empty
+    if not liked_genre_ids and not liked_keyword_ids:
+        print("DEBUG: No genres or keywords found!")
+        return user_profile.recommended_movies.all()
+    
+    # Construct the header
+    headers = {
+        "accept": "application/json",
+    }
+    
+    recommended_set = {}
+    
+    # Search by genres
+    for genre_id in liked_genre_ids:
+        try:
             # Construct the request URL and params
             api_url = f"{API_BASE_URL}/discover/movie"
             params = {
@@ -122,10 +150,12 @@ def update_recommendations(self):
                 "sort_by": "popularity.desc",
                 "page": 1
             }
+            
             # Execute the API Request
             response = requests.get(api_url, headers=headers, params=params)
-            response.raise_for_status() # Raise exception for bad status codes (4xx or 5xx)
+            response.raise_for_status()
             data = response.json()
+            
             # Adding points by genre matches
             for item in data.get('results', []):
                 movie_id = item['id']
@@ -133,7 +163,15 @@ def update_recommendations(self):
                     recommended_set[movie_id] = GENRE_POINTS
                 else:
                     recommended_set[movie_id] += GENRE_POINTS
-        for keyword_id in liked_keywords:
+                    
+            print(f"DEBUG: Found {len(data.get('results', []))} movies for genre {genre_id}")
+        except Exception as e:
+            print(f"DEBUG: Error fetching genre {genre_id}: {e}")
+            continue
+    
+    # Search by keywords
+    for keyword_id in liked_keyword_ids:
+        try:
             # Construct the request URL and params
             api_url = f"{API_BASE_URL}/discover/movie"
             params = {
@@ -142,10 +180,12 @@ def update_recommendations(self):
                 "sort_by": "popularity.desc",
                 "page": 1
             }
+            
             # Execute the API Request
             response = requests.get(api_url, headers=headers, params=params)
-            response.raise_for_status() # Raise exception for bad status codes (4xx or 5xx)
+            response.raise_for_status()
             data = response.json()
+            
             # Adding points by keyword matches
             for item in data.get('results', []):
                 movie_id = item['id']
@@ -153,31 +193,50 @@ def update_recommendations(self):
                     recommended_set[movie_id] = KEYWORD_POINTS
                 else:
                     recommended_set[movie_id] += KEYWORD_POINTS
-        # Sort recommended movies by their accumulated score
-        sorted_recommendations = sorted(
-            recommended_set.items(), 
-            key=lambda item: item[1], 
-            reverse=True
-        )
-        # if the movie is already watched or in watchlist, skip it
-        watched_ids = set(self.watched_movies.values_list('external_id', flat=True))
-        watchlist_ids = set(self.watch_list.values_list('external_id', flat=True))
-        for movie_id, score in sorted_recommendations:
-            if movie_id in watched_ids or movie_id in watchlist_ids:
-                continue
-            movie = None
-            try:
-                movie = Movie.objects.get(external_id=movie_id)
-            except Movie.DoesNotExist:
-                movie_obj = Movie(external_id=movie_id)
-                movie = create_movie_from_external_id(movie_obj)
-            if movie:
-                self.recommended_movies.add(movie)
-                # Limit to 20 recommendations
-                if self.recommended_movies.count() >= 20:
-                   break
-                
-        return self.recommended_movies.all()
+                    
+            print(f"DEBUG: Found {len(data.get('results', []))} movies for keyword {keyword_id}")
+        except Exception as e:
+            print(f"DEBUG: Error fetching keyword {keyword_id}: {e}")
+            continue
+    
+    print(f"DEBUG: Total unique movies found: {len(recommended_set)}")
+    
+    # Sort recommended movies by their accumulated score
+    sorted_recommendations = sorted(
+        recommended_set.items(), 
+        key=lambda item: item[1], 
+        reverse=True
+    )
+    
+    # If the movie is already watched, in watchlist, OR already rated, skip it
+    watched_ids = set(user_profile.watched_movies.values_list('external_id', flat=True))
+    watchlist_ids = set(user_profile.watch_list.values_list('external_id', flat=True))
+    rated_ids = set(user_profile.user.rating_set.values_list('movie__external_id', flat=True))
+    
+    added_count = 0
+    for movie_id, score in sorted_recommendations:
+        if movie_id in watched_ids or movie_id in watchlist_ids or movie_id in rated_ids:
+            continue
+        
+        movie = None
+        try:
+            movie = Movie.objects.get(external_id=movie_id)
+        except Movie.DoesNotExist:
+            result = create_movie_from_external_id(movie_id)
+            if isinstance(result, tuple):
+                movie = result[0]
+            else:
+                movie = result
+        
+        if movie:
+            user_profile.recommended_movies.add(movie)
+            added_count += 1
+            # Limit to 20 recommendations
+            if added_count >= 20:
+                break
+    
+    print(f"DEBUG: Added {added_count} recommendations")
+    return user_profile.recommended_movies.all()
 
 # **** WATCHED MOVIES **** #
 
