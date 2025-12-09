@@ -9,7 +9,6 @@ const getAuthHeaders = () => {
 };
 
 export const movieService = {
-  // Get catalog with popular, top_rated, action, comedy, drama
   getMovies: async () => {
     const response = await fetch(`${API_URL}/movies/`, {
       headers: getAuthHeaders(),
@@ -33,7 +32,6 @@ export const movieService = {
       
       const catalog = await response.json();
       
-      // Search through all catalog sections for the movie
       let foundMovie = null;
       for (const section in catalog) {
         if (Array.isArray(catalog[section])) {
@@ -52,7 +50,6 @@ export const movieService = {
     }
   },
 
-  // Search movies by title (default), director, or genre
   searchMovies: async (query, searchType = 'title') => {
     const response = await fetch(
       `${API_URL}/movies/?search=${encodeURIComponent(query)}&search_type=${searchType}`,
@@ -66,7 +63,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Search by genre
   getMoviesByGenre: async (genre) => {
     const response = await fetch(
       `${API_URL}/movies/?search=${encodeURIComponent(genre)}&search_type=genre`,
@@ -80,7 +76,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Search by director
   getMoviesByDirector: async (director) => {
     const response = await fetch(
       `${API_URL}/movies/?search=${encodeURIComponent(director)}&search_type=director`,
@@ -94,7 +89,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Rate a movie
   rateMovie: async (movieId, score, comment = '') => {
     const response = await fetch(`${API_URL}/ratings/`, {
       method: "POST",
@@ -112,7 +106,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Get user's ratings
   getRatings: async () => {
     const response = await fetch(`${API_URL}/ratings/`, {
       headers: getAuthHeaders(),
@@ -123,7 +116,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Update existing rating
   updateRating: async (movieId, score, comment = '') => {
     const response = await fetch(`${API_URL}/ratings/`, {
       method: "PATCH",
@@ -142,29 +134,16 @@ export const movieService = {
   },
 
   rateOrUpdateMovie: async (movieId, score, comment = '') => {
-  if (score < 1 || score > 10) {
-    throw new Error('Rating must be between 1 and 10');
-  }
-  
-  try {
-      const response = await fetch(`${API_URL}/ratings/`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ 
-          movie: movieId, 
-          score: score,
-          comment: comment 
-        }),
-      });
+    if (score < 1 || score > 10) {
+      throw new Error('Rating must be between 1 and 10');
+    }
+    
+    try {
+      const ratings = await movieService.getRatings();
+      const existingRating = ratings.find(r => r.movie === parseInt(movieId));
       
-      if (response.ok) {
-        return await response.json();
-      }
-      
-      const error = await response.json();
-      
-      if (error.error && error.error.includes('already exists')) {
-        const updateResponse = await fetch(`${API_URL}/ratings/`, {
+      if (existingRating) {
+        const response = await fetch(`${API_URL}/ratings/`, {
           method: "PATCH",
           headers: getAuthHeaders(),
           body: JSON.stringify({ 
@@ -174,21 +153,36 @@ export const movieService = {
           }),
         });
         
-        if (!updateResponse.ok) {
-          const updateError = await updateResponse.json();
-          throw new Error(updateError.error || 'Failed to update rating');
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update rating');
         }
         
-        return await updateResponse.json();
+        return await response.json();
+      } else {
+        const response = await fetch(`${API_URL}/ratings/`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ 
+            movie: movieId, 
+            score: score,
+            comment: comment 
+          }),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to rate movie');
+        }
+        
+        return await response.json();
       }
-      throw new Error(error.error || error.message || 'Failed to rate movie');
     } catch (error) {
-    console.error('Error in rateOrUpdateMovie:', error);
-    throw error;
+      console.error('Error in rateOrUpdateMovie:', error);
+      throw error;
     }
   },
 
-  // Get recommendations
   getRecommendations: async () => {
     const response = await fetch(`${API_URL}/recommended_movies/`, {
       headers: getAuthHeaders(),
@@ -199,7 +193,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Get watchlist
   getWatchList: async () => {
     const response = await fetch(`${API_URL}/movies/watch_list/`, {
       headers: getAuthHeaders(),
@@ -210,7 +203,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Add to watchlist
   addToWatchList: async (external_id) => {
     const response = await fetch(`${API_URL}/movies/watch_list/`, {
       method: 'POST',
@@ -224,7 +216,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Get watched movies
   getWatchedMovies: async () => {
     const response = await fetch(`${API_URL}/movies/watched/`, {
       headers: getAuthHeaders(),
@@ -235,7 +226,6 @@ export const movieService = {
     return response.json();
   },
 
-  // Add to watched movies
   addToWatchedMovies: async (external_id) => {
     const response = await fetch(`${API_URL}/movies/watched/`, {
       method: 'POST',
