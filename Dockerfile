@@ -36,17 +36,8 @@ COPY --from=builder /usr/local/bin/gunicorn /usr/local/bin/
 
 COPY ./frontend/build /app/frontend/build
 
-# Copy the entire project code
-# This copies your backend code and the local ./frontend/build directory
 COPY . /app/
 
-# CRITICAL STEP 1: Run collectstatic
-# This command finds all static files (including the content in ./frontend/build 
-# based on your settings.py) and moves them into STATIC_ROOT (/app/staticfiles).
-RUN python manage.py collectstatic --noinput
-
-# CRITICAL STEP 2: Create and copy the entrypoint script
-# This script handles migrations and DB readiness checks at startup.
 COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 
