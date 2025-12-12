@@ -49,7 +49,8 @@ dist/
 .cache/
 
 # React build
-frontend/build/
+# To make the all in one app works, we add the build folder to the repository
+# frontend/build/
 
 # Testing
 .coverage
