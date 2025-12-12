@@ -34,6 +34,8 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin/gunicorn /usr/local/bin/
 
+COPY ./frontend/build /app/frontend/build
+
 # Copy the entire project code
 # This copies your backend code and the local ./frontend/build directory
 COPY . /app/
