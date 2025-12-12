@@ -49,8 +49,8 @@ dist/
 
 # React build
 # To make the all in one app works, we add the build folder to the repository
-# build/
-# frontend/build/
+build/
+frontend/build/
 
 # Testing
 .coverage

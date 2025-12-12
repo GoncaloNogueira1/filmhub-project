@@ -148,5 +148,6 @@ CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ORIGINS', '').split(',')
 if DEBUG:
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
+        "https://filmhub-frontend-n6i3.onrender.com",
     ]
     CORS_ALLOW_ALL_ORIGINS = True
