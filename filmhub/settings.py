@@ -41,12 +41,10 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
-# **********************************************
-# CORRECTION CRITIQUE : WhiteNoise placé correctement
-# **********************************************
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware', 
+    
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -162,7 +160,7 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 
 # **********************************************
-# CONFIGURATION WHITE NOISE
+#  WHITE NOISE CONFIGURATION
 # **********************************************
 STORAGES = {
     "staticfiles": {
