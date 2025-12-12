@@ -88,10 +88,10 @@ jobs:
       - name: Run migrations (PostgreSQL)
         working-directory: .
         run: |
-          make migrate
+          make migrate_ci
 
       - name: Run Django tests
         working-directory: .
         run: |
-          python manage.py test
+          make test_ci
           
