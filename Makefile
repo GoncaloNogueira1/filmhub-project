@@ -33,14 +33,14 @@ wait_for_db: install
 wait_for_ci_db: install
 	@echo "Waiting for PostgreSQL in CI to be ready..."
 	SUCCESS_FLAG=1; \
-	for i in $$(seq 1 15); do \
-		if PGPASSWORD=votre_mot_de_passe_ci pg_isready -h postgres -U user_ci -d db_ci > /dev/null 2>&1; then \
+	for i in $$(seq 1 20); do \
+		if PGPASSWORD=$(DB_PASSWORD) pg_isready -h $(DB_HOST) -U $(DB_USER) -d $(DB_NAME) > /dev/null 2>&1; then \
 			echo "PostgreSQL is fully available after $$i attempts."; \
 			SUCCESS_FLAG=0; \
 			break; \
 		fi; \
-		echo "Waiting for PostgreSQL ($$i/15)..."; \
-		sleep 2; \
+		echo "Waiting for PostgreSQL ($$i/20)..."; \
+		sleep 3; \
 	done; \
 	if [ "$$SUCCESS_FLAG" -ne 0 ]; then \
 		echo "PostgreSQL failed to start/initialize. Exiting."; \
