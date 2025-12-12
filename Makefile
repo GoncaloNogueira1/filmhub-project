@@ -30,6 +30,23 @@ wait_for_db: install
 		exit 1; \
 	fi
 
+wait_for_ci_db: install
+	@echo "Waiting for PostgreSQL in CI to be ready..."
+	SUCCESS_FLAG=1; \
+	for i in $$(seq 1 15); do \
+		if PGPASSWORD=votre_mot_de_passe_ci pg_isready -h postgres -U user_ci -d db_ci > /dev/null 2>&1; then \
+			echo "PostgreSQL is fully available after $$i attempts."; \
+			SUCCESS_FLAG=0; \
+			break; \
+		fi; \
+		echo "Waiting for PostgreSQL ($$i/15)..."; \
+		sleep 2; \
+	done; \
+	if [ "$$SUCCESS_FLAG" -ne 0 ]; then \
+		echo "PostgreSQL failed to start/initialize. Exiting."; \
+		exit 1; \
+	fi
+
 startDB: install
 	@echo "Starting the PostgreSQL database via Docker Compose..."
 	docker compose up -d postgres
@@ -41,7 +58,7 @@ migrate_local: install wait_for_db
 	python manage.py migrate
 	@echo "Database migrations completed."
 
-migrate_ci : install
+migrate_ci : install wait_for_ci_db
 	@echo "Running database migrations for CI..."
 	python manage.py makemigrations
 	python manage.py migrate
