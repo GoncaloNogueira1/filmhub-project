@@ -46,5 +46,10 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render Deployment
+      - name: Trigger Render Deployment (Backend)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+
+      - name: Trigger Render Deployment (Frontend)
+        if: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+        run: curl -X POST ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
