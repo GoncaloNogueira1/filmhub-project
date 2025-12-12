@@ -2,6 +2,11 @@ name: CD
 
 on:
   workflow_call:
+    secrets:
+      RENDER_DEPLOY_HOOK:
+        required: false
+      RENDER_FRONTEND_DEPLOY_HOOK:
+        required: false
 
 permissions:
   contents: read
