@@ -1,13 +1,13 @@
 #!/bin/sh
 
-cd /app/api
+DJANGO_MANAGE="/app/api/manage.py"
 
 # 1. Robust Wait Loop for Database availability
 MAX_TRIES=15
 TRIES=0
 echo "Waiting for database connection..."
 while [ $TRIES -lt $MAX_TRIES ]; do
-    if python manage.py check --database default; then
+    if python $DJANGO_MANAGE check --database default; then
         echo "Database is ready."
         break
     fi
@@ -23,7 +23,7 @@ fi
 
 # 2. Run database migrations
 echo "Applying database migrations..."
-python manage.py migrate --noinput
+python $DJANGO_MANAGE migrate --noinput
 
-# 3. Execute the main command (gunicorn)
+# 3. Collect static files
 exec "$@"
