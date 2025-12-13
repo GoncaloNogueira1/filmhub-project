@@ -87,13 +87,13 @@ jobs:
         run: |
           echo "Waiting for PostgreSQL service to be available..."
           SUCCESS_FLAG=1
-          for i in $(seq 1 30); do
+          for i in $(seq 1 20); do
             if PGPASSWORD=$DB_PASSWORD pg_isready -h $DB_HOST -p 5432 -U $DB_USER -d $DB_NAME > /dev/null 2>&1; then
               echo "PostgreSQL is fully available after $i attempts."
               SUCCESS_FLAG=0
               break
             fi
-            echo "Waiting for PostgreSQL ($i/30)..."
+            echo "Waiting for PostgreSQL ($i/20)..."
             sleep 3
           done
           if [ "$SUCCESS_FLAG" -ne 0 ]; then
@@ -115,4 +115,3 @@ jobs:
         working-directory: .
         run: |
           make test_ci
-          
