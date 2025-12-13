@@ -1,5 +1,6 @@
 #!/bin/sh
-# /app/docker-entrypoint.sh
+
+cd /app/api
 
 # 1. Robust Wait Loop for Database availability
 MAX_TRIES=15
