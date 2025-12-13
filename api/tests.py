@@ -15,14 +15,11 @@ TEST_PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
     DEBUG=False,
 )
 class RegisterViewTestCase(APITestCase):
-    """Tests for the user registration endpoint"""
     
     def setUp(self):
-        """Setup that runs before each test"""
         self.register_url = reverse('register')
     
     def test_register_new_user_success(self):
-        """Test: Successfully registering a new user"""
         data = {
             'username': 'testuser',
             'password': 'testpass123!',
