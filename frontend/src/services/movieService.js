@@ -1,4 +1,5 @@
-const API_URL = "https://filmhub-project.onrender.com/api";
+import { API_URL } from "../config";
+
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");

@@ -1,5 +1,26 @@
-# --- Stage 1: Builder - Installs Python dependencies ---
-FROM python:3.11-slim as builder
+# --- Stage 1: Build Frontend ---
+FROM node:18 AS build-stage
+
+WORKDIR /app/frontend
+
+COPY ./frontend/package*.json ./
+RUN npm ci
+
+COPY ./frontend/ ./
+
+# Accept API_URL as a build argument
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
+RUN npm run build
+
+# --- Stage 2: Backend & Final Image ---
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Set work directory
 WORKDIR /app

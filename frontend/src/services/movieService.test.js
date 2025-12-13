@@ -1,8 +1,7 @@
 import { movieService } from './movieService';
+import { API_URL } from '../config';
 
-const API_URL = 'https://filmhub-project.onrender.com/api';
 
-// Mock the global fetch function
 global.fetch = jest.fn();
 
 describe('movieService', () => {
@@ -24,7 +23,7 @@ describe('movieService', () => {
 
     const movies = await movieService.getMovies();
     expect(movies).toEqual(mockMovies);
-    expect(fetch).toHaveBeenCalledWith(API_URL+'/movies/', expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith(`${API_URL}/movies/`, expect.any(Object));
   });
 
   it('getMovies throws an error on failure', async () => {
@@ -50,15 +49,13 @@ describe('movieService', () => {
   });
   
   it('getMovie fetches a specific movie', async () => {
-      // Mock successful responses for all parallel requests
-      // catalog, recommendations, watchlist, watched
       const movie = { id: 1, title: 'Target Movie', external_id: 123 };
       
       fetch.mockImplementation((url) => {
           if (url.includes('/movies/') && !url.includes('watch_list') && !url.includes('watched')) {
               return Promise.resolve({
                   ok: true,
-                  json: async () => ({ popular: [movie] }) // Mocking structure based on service logic
+                  json: async () => ({ popular: [movie] })
               });
           }
            return Promise.resolve({
@@ -78,7 +75,8 @@ describe('movieService', () => {
       });
 
       await movieService.rateMovie(123, 8, 'Good');
-      expect(fetch).toHaveBeenCalledWith(API_URL+'/ratings/',
+      expect(fetch).toHaveBeenCalledWith(
+          `${API_URL}/ratings/`,
           expect.objectContaining({
               method: 'POST',
               body: JSON.stringify({ movie: 123, score: 8, comment: 'Good' }),
