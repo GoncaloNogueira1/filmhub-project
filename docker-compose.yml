@@ -1,25 +1,49 @@
 services:
+  # 1. PostgreSQL Database Service
   postgres:
     image: postgres:16
     container_name: filmhub_postgres_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: film123hub
-      POSTGRES_DB: filmhub_db
+      # These must match the DB settings in your Django settings.py and Makefile!
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-film123hub}
+      POSTGRES_DB: ${DB_NAME:-filmhub_db}
     ports:
       - "5432:5432"
-    # volumes:
-      # Initialize the database with a seed script
-      # - ./db-init:/docker-entrypoint-initdb.d
-      # Persist data to avoid data loss on container restart
-      # TO DEFINE
-      # - ./postgres_data:/var/lib/postgresql/data
-      
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/ 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      # Use pg_isready to check if the database is accepting connections
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s     # Check every 5 seconds
+      timeout: 5s      # Wait up to 5 seconds for a response
+      retries: 5       # Consider it unhealthy after 5 failed attempts
+      start_period: 10s # Give it 10 seconds to start up before starting health checks
 
-# volumes:
-#  postgres_data:
+  # 2. Django Application Service (The image you'll build and deploy)
+  web:
+    build: . # Build using the Dockerfile in the current directory
+    container_name: filmhub_web
+    command: /usr/local/bin/gunicorn filmhub.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      # Pass environment variables to the Django application container
+      DB_HOST: postgres # CRITICAL: Use the service name defined above, NOT 'localhost'
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-film123hub}
+      DB_NAME: ${DB_NAME:-filmhub_db}
+      DB_PORT: 5432
+      SECRET_KEY: "your-local-secret-key"
+      DEBUG: "True"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # Adding a restart policy can make it more resilient, similar to production
+    restart: always
+
+# Define a persistent volume for the database data
+volumes:
+  postgres_data:

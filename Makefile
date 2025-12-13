@@ -2,9 +2,9 @@
 
 # **** BACKEND TARGETS **** #
 
-backend : install startDB migrate run clear
+backend_local : clear install startDB migrate_local test_local run clear
 
-super_backend : install startDB super_migrate run clear
+backend_ci : clear install migrate_ci run clear
 
 install:
 	@echo "NOTE : You first need to set up a virtual environment."
@@ -14,20 +14,19 @@ install:
 
 wait_for_db: install
 	@echo "Waiting for PostgreSQL to be ready..."
-    # Netcat (nc) checks if the host (localhost) and port (5432) are open.
 	SUCCESS_FLAG=1; \
-	for i in $$(seq 1 10); do \
-		nc -z -w1 localhost 5432; \
-		if [ $$? -eq 0 ]; then \
-			echo "PostgreSQL est disponible après $$i tentatives."; \
+	for i in $$(seq 1 15); do \
+		if docker compose exec -T postgres pg_isready -h localhost -U myuser -d mydb > /dev/null 2>&1; then \
+			echo "PostgreSQL is fully available after $$i attempts."; \
 			SUCCESS_FLAG=0; \
 			break; \
 		fi; \
-		echo "Waiting for PostgreSQL ($$i/10)..."; \
-		sleep 5; \
-	done
+		echo "Waiting for PostgreSQL ($$i/15)..."; \
+		sleep 2; \
+	done; \
 	if [ "$$SUCCESS_FLAG" -ne 0 ]; then \
-		echo "PostgreSQL failed to start after 50 seconds. Exiting."; \
+		echo "PostgreSQL failed to start/initialize. Exiting."; \
+		docker compose logs postgres; \
 		exit 1; \
 	fi
 
@@ -36,27 +35,30 @@ startDB: install
 	docker compose up -d postgres
 	@echo "PostgreSQL database started."
 
-migrate: install wait_for_db
-	@echo "Running database migrations..."
+migrate_local: install wait_for_db
+	@echo "Running database migrations for local setup..."
 	python manage.py makemigrations
 	python manage.py migrate
 	@echo "Database migrations completed."
 
-super_migrate: install wait_for_db
-	@echo "Running database migrations..."
+migrate_ci : install
+	@echo "Running database migrations for CI..."
 	python manage.py makemigrations
 	python manage.py migrate
-	@echo "Initializing database with super user..."
-	python manage.py createsuperuser
-	@echo "Database migrations completed."
+	@echo "Database migrations for CI completed."
 
 run: install startDB wait_for_db
 	@echo "Starting the development server..."
 	python manage.py runserver
 
-test: install startDB wait_for_db
-	@echo "Running tests..."
+test_local: install migrate_local
+	@echo "Running tests for local setup..."
 	python manage.py test api.tests
+	@echo "Tests completed."
+
+test_ci: install migrate_ci
+	@echo "Running tests for CI..."
+	python manage.py test
 	@echo "Tests completed."
 
 clear:

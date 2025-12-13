@@ -22,28 +22,49 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set the working directory in the container
+# Set work directory
 WORKDIR /app
 
-# Install system dependencies (if any)
-# RUN apt-get update && apt-get install -y ...
+# Set environment variables
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
 
 # Install Python dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        gcc \
+        python3-dev \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+# Copy requirements first to leverage Docker layer caching
 COPY ./api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire backend project directory
-COPY . .
 
-# Copy the build output from the previous stage
-COPY --from=build-stage /app/frontend/build /app/staticfiles
+# --- Stage 2: Final Production Image ---
+FROM python:3.11-slim
 
-# Expose the port the app runs on
+# Set environment variables
+ENV PYTHONUNBUFFERED 1
+ENV DJANGO_SETTINGS_MODULE=filmhub.settings
+
+# Set work directory
+WORKDIR /app
+
+# Copy installed dependencies from the builder stage
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin/gunicorn /usr/local/bin/
+
+COPY . /app/
+
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Expose the port Gunicorn runs on
 EXPOSE 8000
 
-# --- IMPORTANT ---
-# You must:
-# 1. Add 'gunicorn' to your requirements.txt
-# 2. Change 'your_project_name' to your actual Django project's name
-# 3. Make sure your Django settings.py has: STATIC_ROOT = BASE_DIR / "staticfiles"
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "your_project_name.wsgi:application"]
+# Set the entrypoint to the script for robust startup
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
+# The default command to run when the container starts (executed by the entrypoint script)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "filmhub.wsgi:application"]
