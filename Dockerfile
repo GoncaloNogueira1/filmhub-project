@@ -13,10 +13,13 @@ RUN npm ci
 # Copy the rest of the frontend source code
 COPY ./frontend/ ./
 
-ARG API_URL_BUILD
-ARG CACHE_BREAKER=default-value
-
-RUN echo "export const API_URL = '${API_URL_BUILD}';" > ./src/config.js
+RUN if [ -z "$REACT_APP_API_URL" ]; then \
+      echo "Erreur: REACT_APP_API_URL n'est pas défini. Utilisation du fallback."; \
+      API_URL_FINAL="http://localhost:8000/api"; \
+    else \
+      API_URL_FINAL="$REACT_APP_API_URL"; \
+    fi && \
+    echo "export const API_URL = '$API_URL_FINAL';" > ./src/config.js
 
 # Build the React application
 # Le processus npm run build lira maintenant la variable d'environnement REACT_APP_API_URL

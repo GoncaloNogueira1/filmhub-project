@@ -40,8 +40,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            API_URL_BUILD=${{ secrets.REACT_APP_API_URL }}
-            CACHE_BREAKER=${{ github.sha }}
+            # CACHE_BREAKER=${{ github.sha }}
   deploy:
     name: Deploy to Render
     needs: release
