@@ -13,12 +13,10 @@ RUN npm ci
 # Copy the rest of the frontend source code
 COPY ./frontend/ ./
 
-# CRITICAL FIX: Accepter le nouvel ARGUMENT injecté par le CD
 ARG API_URL_BUILD
 ARG CACHE_BREAKER=default-value
 
-# CRITICAL FIX: Convertir l'ARG en ENV pour le processus de construction
-ENV REACT_APP_API_URL=$API_URL_BUILD
+RUN echo "export const API_URL = '${API_URL_BUILD}';" > ./src/config.js
 
 # Build the React application
 # Le processus npm run build lira maintenant la variable d'environnement REACT_APP_API_URL

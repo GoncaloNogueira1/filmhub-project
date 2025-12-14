@@ -43,6 +43,8 @@ services:
         condition: service_healthy
       # Adding a restart policy can make it more resilient, similar to production
     restart: always
+    args:
+      REACT_APP_API_URL: 'http://localhost:8000/api'
 
 # Define a persistent volume for the database data
 volumes:
