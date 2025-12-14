@@ -1,4 +1,6 @@
+# =========================================
 # --- Stage 1: Build Frontend (node:18) ---
+# =========================================
 
 FROM node:18 AS frontend-build
 # Set the working directory inside the container
@@ -18,7 +20,9 @@ ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 # Build the React application
 RUN npm run build
 
+# ===============================================================
 # --- Stage 2: Install Python Dependencies (python:3.11-slim) ---
+# ===============================================================
 # This stage installs system dependencies and Python packages
 FROM python:3.11-slim AS backend-deps
 
@@ -41,31 +45,36 @@ WORKDIR /app
 COPY ./api/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# =======================================
 # --- Stage 3: Final Production Image ---
+# =======================================
 FROM python:3.11-slim AS production
 
 # Set environment variables
 ENV PYTHONUNBUFFERED 1
-# Set Django settings module
+# Set Django settings module (filmhub/ is at the root of the app)
 ENV DJANGO_SETTINGS_MODULE=filmhub.settings
 
-# CRITICAL FIX: Set WORKDIR to the Django application root
-# This is necessary for Gunicorn to find the WSGI module easily.
-WORKDIR /app/api 
+# CRITICAL FIX 1: Set WORKDIR to /app (Standard Django root)
+WORKDIR /app 
 
 # 1. Copy installed dependencies from the builder stage
 COPY --from=backend-deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=backend-deps /usr/local/bin/gunicorn /usr/local/bin/
 
-# 2. Copy the backend source code (including manage.py)
+# 2. CRITICAL FIX 2: Copy the necessary backend source code based on your project schema:
+# Copy the API application module
 COPY ./api/ /app/api/ 
+# Copy Django configuration folder (filmhub/), manage.py, and docker-entrypoint.sh from the repo root
+COPY manage.py /app/
+COPY filmhub/ /app/filmhub/
+COPY docker-entrypoint.sh /app/
 
 # 3. Copy the compiled frontend assets (React build)
 # Destination path /app/static must match STATIC_ROOT in settings.py
 COPY --from=frontend-build /app/frontend/build /app/static 
 
-# 4. Copy and set executable permissions for the entrypoint script
-COPY docker-entrypoint.sh /app/
+# 4. Set executable permissions for the entrypoint script
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose the port Gunicorn runs on
@@ -75,5 +84,4 @@ EXPOSE 8000
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # The default command to run (will be executed by the entrypoint script)
-# Path is relative to WORKDIR /app/api
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "filmhub.settings.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "filmhub.wsgi:application"]

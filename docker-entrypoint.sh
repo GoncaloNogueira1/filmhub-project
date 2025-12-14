@@ -1,8 +1,7 @@
 #!/bin/sh
 
-DJANGO_MANAGE="/app/api/manage.py"
+DJANGO_MANAGE="/app/manage.py"
 
-# 1. Robust Wait Loop for Database availability
 MAX_TRIES=15
 TRIES=0
 echo "Waiting for database connection..."
@@ -25,5 +24,4 @@ fi
 echo "Applying database migrations..."
 python $DJANGO_MANAGE migrate --noinput
 
-# 3. Collect static files
 exec "$@"
