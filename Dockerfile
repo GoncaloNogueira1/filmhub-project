@@ -15,9 +15,10 @@ COPY ./frontend/ ./
 
 # Accept API_URL as a build argument
 ARG REACT_APP_API_URL
+ARG CACHE_BREAKER=default-value
 
 # Build the React application
-RUN REACT_APP_API_URL=${REACT_APP_API_URL} npm run build
+RUN export REACT_APP_API_URL=${REACT_APP_API_URL} && npm run build
 
 # ===============================================================
 # --- Stage 2: Install Python Dependencies (python:3.11-slim) ---
